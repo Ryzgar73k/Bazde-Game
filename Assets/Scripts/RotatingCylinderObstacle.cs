@@ -2,34 +2,34 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Döner şişme silindir parkuru (Sag_Dev_Sisme_Silindir_Parca_*). Çark kodundan bağımsızdır.
-/// Aynı gruptaki parçalar (aynı parent + aynı ".001" soneki) oyun başında ölçeği 1 olan ortak bir
-/// pivotun altına alınır ve grup tek parça gibi döner. Her grup kendi merkezinde döner.
+/// DÃ¶ner ÅŸiÅŸme silindir parkuru (Sag_Dev_Sisme_Silindir_Parca_*). Ã‡ark kodundan baÄŸÄ±msÄ±zdÄ±r.
+/// AynÄ± gruptaki parÃ§alar (aynÄ± parent + aynÄ± ".001" soneki) oyun baÅŸÄ±nda Ã¶lÃ§eÄŸi 1 olan ortak bir
+/// pivotun altÄ±na alÄ±nÄ±r ve grup tek parÃ§a gibi dÃ¶ner. Her grup kendi merkezinde dÃ¶ner.
 /// </summary>
 public class RotatingCylinderObstacle : MonoBehaviour
 {
     public enum Axis
     {
-        Otomatik_SilindirUzunlugu, // eski sürümlerle uyumluluk için duruyor, Y gibi davranır
-        Y_YatayDonus,              // Dünya Y (yukarı) ekseni = Blender'daki Z ekseni
+        Otomatik_SilindirUzunlugu, // eski sÃ¼rÃ¼mlerle uyumluluk iÃ§in duruyor, Y gibi davranÄ±r
+        Y_YatayDonus,              // DÃ¼nya Y (yukarÄ±) ekseni = Blender'daki Z ekseni
         Z_DikeyTekerlek,
         X_TaklaEksen,
         OzelEksen
     }
 
-    [Header("Silindir Dönüş Ayarları")]
-    [Tooltip("Y_YatayDonus = Blender'daki Z ekseni (yukarı eksen). Dünya eksenine göre döner.")]
+    [Header("Silindir DÃ¶nÃ¼ÅŸ AyarlarÄ±")]
+    [Tooltip("Y_YatayDonus = Blender'daki Z ekseni (yukarÄ± eksen). DÃ¼nya eksenine gÃ¶re dÃ¶ner.")]
     public Axis rotationAxis = Axis.Y_YatayDonus;
 
-    [Tooltip("Saniyedeki dönüş hızı (Derece). Ters yöne dönmesi için eksi (-) değer verin.")]
+    [Tooltip("Saniyedeki dÃ¶nÃ¼ÅŸ hÄ±zÄ± (Derece). Ters yÃ¶ne dÃ¶nmesi iÃ§in eksi (-) deÄŸer verin.")]
     public float rotationSpeed = 35f;
 
     [HideInInspector] public Space rotationSpace = Space.World;
 
-    [Tooltip("Sadece 'OzelEksen' seçiliyse kullanılır (dünya ekseni)")]
+    [Tooltip("Sadece 'OzelEksen' seÃ§iliyse kullanÄ±lÄ±r (dÃ¼nya ekseni)")]
     public Vector3 customAxis = Vector3.up;
 
-    [Header("Oyuncu Kaydırma Etkisi")]
+    [Header("Oyuncu KaydÄ±rma Etkisi")]
     [Range(0f, 2f)]
     public float playerPushMultiplier = 1f;
 
@@ -74,7 +74,7 @@ public class RotatingCylinderObstacle : MonoBehaviour
 
     void Awake()
     {
-        if (handled.Contains(transform)) return; // başka bir parça grubu zaten kurdu
+        if (handled.Contains(transform)) return; // baÅŸka bir parÃ§a grubu zaten kurdu
 
         string key = GroupKey(transform);
         var members = new List<RotatingCylinderObstacle>();
@@ -111,7 +111,7 @@ public class RotatingCylinderObstacle : MonoBehaviour
 
     void Update()
     {
-        if (leader != this || pivot == null) return; // sadece grup lideri pivotu döndürür
+        if (leader != this || pivot == null) return; // sadece grup lideri pivotu dÃ¶ndÃ¼rÃ¼r
         pivot.Rotate(CurrentWorldAxis, rotationSpeed * Time.deltaTime, Space.World);
     }
 
