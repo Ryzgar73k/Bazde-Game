@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8372324039288242402}
   - component: {fileID: 4683960918531595458}
   - component: {fileID: 8495502402034889314}
+  - component: {fileID: 5216928692616927874}
   m_Layer: 0
   m_Name: Sol_UViraj_Bariyer_4
   m_TagString: Untagged
@@ -90,3 +91,25 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!64 &5216928692616927874
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 569297518784885232}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -2190565914237928072, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

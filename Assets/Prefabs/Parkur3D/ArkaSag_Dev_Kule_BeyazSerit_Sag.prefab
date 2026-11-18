@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3858291106908115872}
   - component: {fileID: 4238695593883476866}
   - component: {fileID: 1058188899867373780}
-  - component: {fileID: 386369931732711037}
+  - component: {fileID: 4873914034096834913}
   m_Layer: 0
   m_Name: ArkaSag_Dev_Kule_BeyazSerit_Sag
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &386369931732711037
-BoxCollider:
+--- !u!64 &4873914034096834913
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,6 +109,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.036336355, y: 0.0059898114, z: 0.04211471}
-  m_Center: {x: -9.313226e-10, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 1469371628823144193, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

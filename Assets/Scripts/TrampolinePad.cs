@@ -7,17 +7,21 @@
 public class TrampolinePad : MonoBehaviour
 {
     [Header("Trambolin Ayarları")]
-    [Tooltip("Kaç saniyede bir havaya fırlatsın?")]
-    public float bounceInterval = 2f;
+    [Tooltip("Üstünde durmaya devam edilirse kaç saniyede bir yeniden fırlatsın?")]
+    public float bounceInterval = 0.25f;
 
     [Tooltip("Oyuncuyu kaç metre yükseğe fırlatsın?")]
     public float bounceHeight = 6f;
 
-    [Tooltip("Oyuncu üstüne bastığında ilk zıplatmayı beklemeden hemen yapsın mı? (Kapalıysa 2 saniye bekleyip fırlatır)")]
-    public bool bounceImmediatelyOnStep = false;
+    [Tooltip("Oyuncu üstüne bastığında beklemeden hemen fırlatsın mı?")]
+    public bool bounceImmediatelyOnStep = true;
 
     [Tooltip("Üzerinde oyuncuyu algılama mesafesi (metre)")]
-    public float detectionPadding = 1.2f;
+    public float detectionPadding = 0.28f;
+
+    public const int LatestConfigVersion = 3;
+
+    [HideInInspector] public int configVersion = 0;
 
     private float timer;
     private Collider padCollider;
@@ -26,10 +30,26 @@ public class TrampolinePad : MonoBehaviour
     private CharacterController cachedPlayerCC;
     private bool playerTouchReported;
 
+    public void ApplyConfigMigration()
+    {
+        if (configVersion < 2)
+        {
+            bounceImmediatelyOnStep = true;
+            if (bounceInterval >= 1.5f) bounceInterval = 0.25f;
+            configVersion = 2;
+        }
+        if (configVersion < 3)
+        {
+            if (detectionPadding > 0.5f) detectionPadding = 0.28f;
+            configVersion = 3;
+        }
+    }
+
     void Awake()
     {
         var all = GetComponents<TrampolinePad>();
         if (all.Length > 1 && all[0] != this) { enabled = false; return; }
+        ApplyConfigMigration();
         padCollider = GetComponent<Collider>();
         padRenderer = GetComponent<Renderer>();
         timer = bounceImmediatelyOnStep ? bounceInterval : 0f;
@@ -40,14 +60,15 @@ public class TrampolinePad : MonoBehaviour
         cachedPlayer = player;
         if (cachedPlayerCC == null && player != null)
             cachedPlayerCC = player.GetComponent<CharacterController>();
-        playerTouchReported = true;
+        if (IsPlayerOnTrampoline())
+            playerTouchReported = true;
     }
 
     void Update()
     {
         if (cachedPlayer == null)
         {
-            cachedPlayer = Object.FindFirstObjectByType<PlayerController>();
+            cachedPlayer = Object.FindAnyObjectByType<PlayerController>();
             if (cachedPlayer != null)
                 cachedPlayerCC = cachedPlayer.GetComponent<CharacterController>();
         }
@@ -76,28 +97,53 @@ public class TrampolinePad : MonoBehaviour
 
     private bool IsPlayerOnTrampoline()
     {
-        Bounds b;
+        if (cachedPlayer == null || cachedPlayerCC == null)
+            return false;
+
+        // Oyuncunun gerçek ayak tabanı pozisyonunu (skinWidth dahil) al
+        Vector3 playerFeet = cachedPlayer.GetWorldFootPosition();
+        float verticalPad = Mathf.Clamp(detectionPadding, 0.12f, 0.35f);
+
         if (padCollider != null)
-            b = padCollider.bounds;
-        else if (padRenderer != null)
-            b = padRenderer.bounds;
-        else
+        {
+            Bounds colBounds = padCollider.bounds;
+            float footRadius = Mathf.Clamp(cachedPlayerCC.radius * 0.6f, 0.06f, 0.11f);
+
+            // İçbükey MeshCollider ClosestPoint desteklemediğinden dikey ışınla gerçek yüzey şeklini kontrol et
+            if (padCollider is MeshCollider nonConvexMesh && !nonConvexMesh.convex)
+            {
+                Vector3 rayOrigin = new Vector3(playerFeet.x, colBounds.max.y + 0.12f, playerFeet.z);
+                float rayDist = colBounds.size.y + 0.35f;
+                if (!nonConvexMesh.Raycast(new Ray(rayOrigin, Vector3.down), out RaycastHit hit, rayDist))
+                    return false;
+
+                return playerFeet.y >= (hit.point.y - 0.15f) && playerFeet.y <= (hit.point.y + verticalPad);
+            }
+
+            // Gerçek collider geometrisi (dairesel/çokgen MeshCollider vb.) ile şekil uyumlu kontrol
+            Vector3 closest = padCollider.ClosestPoint(playerFeet);
+            float dx = closest.x - playerFeet.x;
+            float dz = closest.z - playerFeet.z;
+            if ((dx * dx + dz * dz) > (footRadius * footRadius))
+                return false;
+
+            float minTopY = colBounds.max.y - Mathf.Min(0.25f, colBounds.size.y * 0.6f);
+            return playerFeet.y >= minTopY
+                && playerFeet.y >= (closest.y - 0.12f)
+                && playerFeet.y <= (closest.y + verticalPad);
+        }
+
+        if (padRenderer == null)
             return false;
 
-        // Oyuncu kapsülünün en alt noktasını (ayaklarını) hesapla
-        Vector3 capsuleCenterWorld = cachedPlayer.transform.TransformPoint(cachedPlayerCC.center);
-        float bottomY = capsuleCenterWorld.y - (cachedPlayerCC.height * 0.5f);
-        Vector3 playerFeet = new Vector3(capsuleCenterWorld.x, bottomY, capsuleCenterWorld.z);
-
-        // Oyuncu yatayda (X ve Z) trambolinin sınırları içinde mi?
-        bool insideXZ = playerFeet.x >= (b.min.x - 0.45f) && playerFeet.x <= (b.max.x + 0.45f) &&
-                        playerFeet.z >= (b.min.z - 0.45f) && playerFeet.z <= (b.max.z + 0.45f);
-
-        if (!insideXZ)
+        Bounds b = padRenderer.bounds;
+        Vector2 centerXZ = new Vector2(b.center.x, b.center.z);
+        Vector2 feetXZ = new Vector2(playerFeet.x, playerFeet.z);
+        float maxRadius = Mathf.Min(b.extents.x, b.extents.z);
+        if (Vector2.Distance(centerXZ, feetXZ) > maxRadius)
             return false;
 
-        // Oyuncunun ayakları trambolin yüksekliği civarında mı?
-        return playerFeet.y >= (b.min.y - 0.5f) && playerFeet.y <= (b.max.y + detectionPadding);
+        return playerFeet.y >= (b.max.y - 0.25f) && playerFeet.y <= (b.max.y + verticalPad);
     }
 }
 

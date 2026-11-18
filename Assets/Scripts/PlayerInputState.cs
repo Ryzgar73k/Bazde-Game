@@ -12,6 +12,7 @@ public static class PlayerInputState
     public static Vector2 TouchLookDelta; // bu karedeki piksel değişimi
     public static bool TouchRun;          // koşma butonu basılı mı (toggle değil, basılı tutma)
     public static bool TouchJumpPressed;  // bu karede zıplama basıldı
+    public static bool TouchJumpHeld;     // zıplama butonu basılı tutuluyor mu
 
     public static Vector2 Move
     {
@@ -69,6 +70,18 @@ public static class PlayerInputState
             if (kb != null && kb.spaceKey.wasPressedThisFrame) return true;
             var gp = Gamepad.current;
             return gp != null && gp.buttonSouth.wasPressedThisFrame;
+        }
+    }
+
+    public static bool JumpHeld
+    {
+        get
+        {
+            if (TouchJumpHeld) return true;
+            var kb = Keyboard.current;
+            if (kb != null && kb.spaceKey.isPressed) return true;
+            var gp = Gamepad.current;
+            return gp != null && gp.buttonSouth.isPressed;
         }
     }
 

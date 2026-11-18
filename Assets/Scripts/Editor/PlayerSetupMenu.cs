@@ -42,12 +42,12 @@ public static class PlayerSetupMenu
             Undo.RegisterCreatedObjectUndo(player, "Player");
         }
 
-        // CharacterController ayarla
+        // CharacterController ayarla (skinWidth taban payı dahil, ayaklar y=0'a denk gelsin)
         var cc = player.GetComponent<CharacterController>();
         if (cc == null) cc = player.AddComponent<CharacterController>();
         cc.height = 1.9f;
         cc.radius = 0.35f;
-        cc.center = new Vector3(0, 0.95f, 0);
+        cc.center = new Vector3(0, 0.95f + cc.skinWidth, 0);
         cc.stepOffset = 0.55f;
         cc.slopeLimit = 55f;
 
@@ -92,6 +92,7 @@ public static class PlayerSetupMenu
             var anim = instance.GetComponent<Animator>();
             if (anim == null) anim = instance.AddComponent<Animator>();
             anim.applyRootMotion = false;
+            if (instance.GetComponent<FootIK>() == null) instance.AddComponent<FootIK>();
             pc.animator = anim;
         }
 
@@ -108,12 +109,10 @@ public static class PlayerSetupMenu
         follow.target = player.transform;
         follow.distance = 3.2f;
         follow.height = 1.6f;
-        follow.followSmoothing = 30f;
-        follow.lockInstant = true;
         pc.cameraTransform = cam.transform;
 
         // 6. Mobil kontroller
-        if (Object.FindFirstObjectByType<MobileControlsUI>() == null)
+        if (Object.FindAnyObjectByType<MobileControlsUI>() == null)
         {
             var ui = new GameObject("MobileControls", typeof(MobileControlsUI));
             Undo.RegisterCreatedObjectUndo(ui, "MobileControls");

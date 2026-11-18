@@ -16,7 +16,7 @@ public class MobileControlsUI : MonoBehaviour
     {
         if (!showOnDesktop && !Application.isMobilePlatform) return;
 
-        if (FindFirstObjectByType<EventSystem>() == null)
+        if (FindAnyObjectByType<EventSystem>() == null)
         {
             var es = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         }
@@ -48,7 +48,9 @@ public class MobileControlsUI : MonoBehaviour
 
         // Zıpla butonu
         var jump = CreateButton("JumpButton", canvasGO.transform, "ZIPLA", new Vector2(-200, 250), new Vector2(200, 200));
-        jump.gameObject.AddComponent<HoldButton>().onDown = () => PlayerInputState.TouchJumpPressed = true;
+        var jumpHb = jump.gameObject.AddComponent<HoldButton>();
+        jumpHb.onDown = () => { PlayerInputState.TouchJumpPressed = true; PlayerInputState.TouchJumpHeld = true; };
+        jumpHb.onUp = () => PlayerInputState.TouchJumpHeld = false;
 
         // Koş butonu (basılı tut)
         var run = CreateButton("RunButton", canvasGO.transform, "KOŞ", new Vector2(-450, 150), new Vector2(160, 160));
@@ -147,10 +149,9 @@ public class LookPad : MonoBehaviour, IDragHandler
 }
 
 /// <summary>Basma/bırakma olaylarını bildiren buton.</summary>
-public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public System.Action onDown, onUp;
     public void OnPointerDown(PointerEventData e) { onDown?.Invoke(); }
     public void OnPointerUp(PointerEventData e) { onUp?.Invoke(); }
-    public void OnPointerExit(PointerEventData e) { }
 }

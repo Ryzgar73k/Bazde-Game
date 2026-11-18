@@ -52,13 +52,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.9
-  m_Radius: 0.35
+  m_Height: 1.08
+  m_Radius: 0.16
   m_SlopeLimit: 55
-  m_StepOffset: 0.45
-  m_SkinWidth: 0.08
+  m_StepOffset: 0.24
+  m_SkinWidth: 0.025
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 3.25, z: 0}
+  m_Center: {x: 0, y: 2.785, z: 0}
 --- !u!114 &3331698592316995550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,21 +71,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b424602f5554d5647b8fd7a3f659704d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 3
-  runSpeed: 4.5
+  walkSpeed: 4.2
+  runSpeed: 7.2
   acceleration: 40
+  deceleration: 30
+  turnAccelerationMultiplier: 1.6
   airControl: 0.85
-  turnSpeed: 300
-  jumpHeight: 2.6
-  jumpForwardBoost: 4
+  airReleaseDrag: 2.2
+  turnSpeed: 900
+  jumpHeight: 1.45
+  jumpForwardBoost: 0
   gravity: -26
+  lowJumpGravityMultiplier: 2.6
   coyoteTime: 0.12
   jumpBufferTime: 0.12
-  maxStepHeight: 0.45
+  useRootMotionInJump: 0
+  maxStepHeight: 0.24
   maxSlopeAngle: 55
+  edgeSlideSpeed: 3.6
   cameraTransform: {fileID: 0}
   animator: {fileID: 3885790709283852137}
   rootMotionJumpScale: 1
+  configVersion: 5
+  killY: -1.5
 --- !u!1001 &7243916468937569016
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -112,7 +120,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.29
+      value: 2.22
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
       propertyPath: m_LocalPosition.z

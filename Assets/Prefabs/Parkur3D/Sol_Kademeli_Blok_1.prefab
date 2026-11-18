@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6517326113797741535}
   - component: {fileID: 1385211328972921037}
   - component: {fileID: 1833622200738427199}
-  - component: {fileID: 7942720408263969371}
+  - component: {fileID: 988922206237762450}
   m_Layer: 0
   m_Name: Sol_Kademeli_Blok_1
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &7942720408263969371
-BoxCollider:
+--- !u!64 &988922206237762450
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,6 +109,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.025989814, y: 0.025989814, z: 0.004189807}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -5787933851255355832, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

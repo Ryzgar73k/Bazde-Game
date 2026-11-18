@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5478569358368668704
-BoxCollider:
+--- !u!64 &5478569358368668704
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,6 +109,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.024255505, y: 0.0023999978, z: 0.0123929735}
-  m_Center: {x: 0, y: -4.0745363e-10, z: 0.0021197274}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -5744307783776616981, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

@@ -49,7 +49,7 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
   - `Level1.unity`: Parkur, karakter, kamera, mobil kontroller, dönen çark, dönen silindirler ve trambolinin bulunduğu aktif sahne.
   - `Level2.unity`, `Test.unity`: Şu an sadece `Main Camera` ve `Directional Light` içeren boş sahneler.
 - `Assets/Scripts/`
-  - `PlayerController.cs`: `CharacterController` tabanlı hareket, coyote time, jump buffer, havada kontrol, basamak/eğim desteği ve engel/trambolin etkileşimi.
+  - `PlayerController.cs`: `CharacterController` tabanlı hareket, değişken zıplama yüksekliği, coyote time, jump buffer, havada kontrol, basamak/eğim desteği, denize düşünce (`killY`) yeniden doğma ve engel/trambolin etkileşimi.
   - `PlayerInputState.cs`: Klavye, fare, gamepad ve dokunmatik UI girdilerini birleştirir.
   - `ThirdPersonCamera.cs`: Üçüncü şahıs takip kamerası (PC'de fare kilitleme dahil).
   - `MobileControlsUI.cs`: Çalışma anında dokunmatik joystick ve `ZIPLA` / `KOŞ` butonlarını oluşturur.
@@ -57,7 +57,8 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
   - `ContinuousRotator.cs`: Dış çark (`OnSag_Cark_Dis_Cember`) ve 4 kolunu tek pivot üzerinden döndürür, üstündeki oyuncuyu döndürür/kaydırır.
   - `RotatingCylinderObstacle.cs`: Döner silindir parçalarını (`Sag_Dev_Sisme_Silindir_Parca_*`) grup halinde döndürür ve oyuncuyu kaydırır.
   - `RotatorPivotMarker.cs`: Dönen grupların dinamik pivotlarında referans tutar.
-  - `TrampolinePad.cs`: `Merkez_Trambolin_Yuzeyi` üzerinde oyuncuyu belirli aralıklarla (`2 sn`, `6 m`) yukarı fırlatır.
+  - `TrampolinePad.cs`: `Merkez_Trambolin_Yuzeyi` üzerinde oyuncuyu basıldığı anda (`0.25 sn` tekrar aralığı, `6 m`) yukarı fırlatır.
+  - `FootIK.cs`: Unity Humanoid IK (`OnAnimatorIK`) ile ayakların eğim ve silindir yüzeylerine basmasını ve kalça hizasını ayarlar.
 - `Assets/Scripts/Editor/`
   - `LevelBoxColliderTool.cs`: `Assets/Models/` altındaki FBX'lere collider ekler ve editör açılışında çark/silindir/trambolin bileşenlerini isimlere göre otomatik bağlar.
   - `PlayerSetupMenu.cs`, `AnimationSetupTool.cs`, `FixRemyMaterials.cs`: `Tools > Parkur > ...` altındaki kurulum yardımcıları.
@@ -72,7 +73,7 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
   - `.meta` dosyalarını kesinlikle silmeyin ve sahnede yaptığınız değişikliklerde ilgili `.meta` dosyalarını da commit'leyin.
   - Aynı anda aynı sahne (`Level1.unity`) üzerinde birden fazla kişi düzenleme yaparsa çakışma (merge conflict) çıkabilir; sahne düzenlemeden önce ekibe haber verin ve değişiklikleri prefab üzerinden yapmaya çalışın.
 - **Editör Menüleri Uyarısı (`Tools > Parkur`):**
-  - `Level1.unity` içindeki `Player` ayarları sahneye özel düzenlenmiştir (`CharacterController.center.y = 3.25` vb.). **`Tools > Parkur > Oyuncuyu Kur`** menüsünü mevcut `Level1` sahnesinde çalıştırırsanız oyuncu kapsülü ve modeli varsayılan değerlere sıfırlanabilir.
+  - `Level1.unity` içindeki `Player` ayarları sahneye özel düzenlenmiştir (`CharacterController.center.y = 2.785` vb.). **`Tools > Parkur > Oyuncuyu Kur`** menüsünü mevcut `Level1` sahnesinde çalıştırırsanız oyuncu kapsülü ve modeli varsayılan değerlere sıfırlanabilir.
   - **Düzeltme Önerisi (Not):** Yeni seviyelerde (`Level2.unity` vb.) bu aracı kullanmak yerine doğrudan `Assets/Prefabs/Player.prefab` dosyasını sahneye sürüklemek daha güvenlidir. İleride istenirse `PlayerSetupMenu.cs` içindeki varsayılan kapsül/model değerleri `Player.prefab` ve `Level1.unity` ile eşitlenerek menü aracının sahnedeki hizalamayı bozması tamamen önlenebilir.
 - **Engel İsimlendirme Kuralları:**
   - `LevelBoxColliderTool.cs` editör açılışında/derlemede nesne isimlerine bakarak otomatik işlem yapar:
@@ -84,6 +85,17 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
   - `Level1.unity` içinde `MobileControls` nesnesinde `Show On Desktop` açıktır (`true`); oyun telefon için geliştirildiğinden editörde mobil arayüzü sürekli görmek açısından faydalıdır.
   - Ancak `ThirdPersonCamera.cs` masaüstünde sol tıkta fare imlecini tekrar kilitlediği için, `ESC` ile imleci açsanız bile ekrandaki dokunmatik `ZIPLA` / `KOŞ` butonlarına veya joystick'e fareyle tıkladığınızda imleç yeniden kilitlenir.
   - **Düzeltme Önerisi (Not):** İleride `ThirdPersonCamera.cs` içinde UI elemanlarının (`EventSystem.current.IsPointerOverGameObject()`) üzerine tıklandığında imleci kilitlemeyecek şekilde güncelleme yapılabilir ve `MobileControlsUI.HoldButton` için `OnPointerExit` eklenerek parmağı buton dışına kaydırınca koşunun takılı kalması önlenebilir. Editörde mobil görünüm/dokunmatik test için **Unity Device Simulator** (*Game → Simulator*) da kullanılabilir.
+- **Trambolin Yerleşimi ve Görsel/Fiziksel Geri Bildirim (`Merkez_Trambolin_Yuzeyi`):**
+  - Trambolin şu an parkurda zıplama gerektirmeyen bir konuma yerleştirilmiş durumda; seviye tasarımı düzenlemesinde oyuncunun gerçekten yararlanacağı/atlayacağı işlevsel bir yere taşınması gerekiyor.
+  - **Önerilen İyileştirmeler (Planlanan):** `TrampolinePad.cs` içinde `Bounce()` tetiklendiği anda pedin kendi `localScale` değerini kısa süreli yaylandıran (`~0.08 sn` sıkışıp `0.15 sn` eski haline dönen *Squash & Stretch* coroutine), yukarı doğru sıçrayan bir `ParticleSystem` efekti ve `AudioSource.PlayOneShot` zıplama sesi eklenerek tepki hissi güçlendirilebilir.
+- **Havada Dik (`Idle`) Pozda Asılı Görünme Sorunu (`Level1.unity` / `PlayerAnimatorController` Notu):**
+  - **Kök Neden:** O noktada karakterin ayağının altında gizli bir collider yoktur (`On_Kemer_Kopru_*` ve `OnSol_Ust_Kemer_*` non-convex `MeshCollider`, `Merkez_Trambolin_Yuzeyi` ise `y = 0.69` lokal yüksekliğindedir). Karakter havada doğrudan `Idle` (şu an `Assets/char@Bored.fbx`, eskiden `X Bot@Offensive Idle.fbx`) animasyonuna geçmiştir:
+    1. Eski `PlayerAnimatorController.controller` içinde `!IsGrounded` (düşüş) geçişi bulunmadığından, zıplamadan kenardan düşerken yön tuşu bırakılınca (`Speed < 0.2`) Animator havada `Idle` durumuna dönüyordu.
+    2. Eski `Bounce()` sırasında `cc.Move` / `OnControllerColliderHit` aynı karede `IsGrounded` parametresini `true` bırakabildiği için fırlatma anında `Jump -> Idle` geri dönüşü oluşabiliyordu.
+    3. `Reload Domain disabled` (`Enter Play Mode Options`) etkinken Play Mode açıkken derleme yapılırsa `LevelAutoInitializer` controller yenilemesini o anda atlar (`Parameter 'Hash -1380605809' does not exist` logu üretebilirdi). `LevelAutoInitializer` artık Play Mode çıkışında (`PlayModeStateChange.EnteredEditMode`) da çalışacak şekilde güncellendi ve `PlayerController` parametre önbellek koruması eklendi. *(Play Mode açıksa controller'ın güncellenmesi için Play Mode'dan bir kez çıkıp tekrar girmek gerekir.)*
+- **Genel Animasyon Durumu ve Planlanan Düzeltmeler (`Jump` & `Idle`):**
+  - Şu an `Idle` için `Assets/char@Bored.fbx`, `Jump` için ise geçici olarak `Assets/X Bot@Jumping.fbx` (`JumpRise` / `JumpFall` alt klipleri) kullanılmaktadır.
+  - **Planlanan:** `Jump` ve `Idle` başta olmak üzere genel animasyon düzeltmeleri (daha uyumlu zıplama/düşüş/iniş klipleri, `Idle` poz/döngü iyileştirmesi, durumlar arası daha akıcı geçişler ve `FootIK` ince ayarı) sonraki aşamada yapılacaktır.
 
 ---
 
@@ -91,10 +103,14 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
 
 Ekip üyeleri eklediği veya değiştirdiği maddeleri buraya işaretleyebilir:
 
-- [ ] **Düşme / Respawn Sistemi:** Parkurdan aşağı düşen oyuncuyu başlangıca veya son checkpoint'e döndürme
-- [ ] **Checkpoint Sistemi:** Parkur boyunca kayıt noktaları
+- [ ] **Animasyonların Elden Geçirilmesi:** `Idle`, kısa zıplama (tap), normal zıplama (hold), trambolin zıplaması ve iniş/geçiş animasyonlarının eklenmesi/değiştirilmesi (`X Bot@Jumping.fbx` ve `char@Bored.fbx` geçicilerinin yenilenmesi), `Idle / Walk / Run` Blend Tree, yön değiştirirken pivot/turn-in-place ve `FootIK` ince ayarı
+- [ ] **Parkur ve Engel Tasarımı Revizyonu:** `Merkez_Trambolin_Yuzeyi` nesnesinin gerçekten işe yarayacağı anlamlı bir noktaya taşınması; dönen ve üzerinde parçalar bulunan platformda parçaların üzerinden koşarak/zıplayarak kolayca geçilebilmesi sorununun (yükseklik/çarpışma/yerleşim) giderilmesi ve parkurdaki gereksiz parçaların temizlenmesi
+- [ ] **Genel Düzenlemeler ve Hissiyat Araştırmaları:** Kamera, zıplama/iniş eğrileri, çarpışma ve parkur akışı için referans araştırmaları ve ince ayarlar
+- [ ] **Tutunma ve Tırmanma (Ledge Grab / Climb):** Parkur oynanışı için platform kenarlarına tutunma, kenardan yukarı tırmanma (mantle) ve düşme anında kenar yakalama mekanikleri
+- [ ] **Checkpoint & Gelişmiş Respawn Sistemi:** Denize düşünce başlangıca dönme (`killY`) mevcut; parkur boyunca kayıt noktaları (checkpoint) eklenip son checkpoint'e döndürme eklenecek
 - [ ] **Bitiş Noktası ve Level Geçişi:** Parkur sonu tetikleyicisi, bayrak/Timeline etkileşimi ve `Level2.unity` sahnesine geçiş
 - [ ] **Level 2 Tasarımı:** Şu an boş olan `Assets/Scenes/Level2.unity` sahnesinin oluşturulması ve Build Settings'e eklenmesi
 - [ ] **PC / Mobil Kontrol Ayrımı:** PC build'lerinde `MobileControlsUI.showOnDesktop` ayarının kapatılması veya platforma göre otomatik gizlenmesi
 - [ ] **Ses Efektleri ve Müzik:** Zıplama, koşma, trambolin ve ortam sesleri
 - [ ] **Arayüz (UI):** Başlangıç menüsü, duraklatma (`ESC` menüsü) ve bölüm sonu ekranı
+- [ ] **Son Aşama — Branch Birleştirme:** Tüm karakter, animasyon ve parkur düzenlemeleri tamamlandıktan sonra `dev/umutcan` branch'ındaki değişikliklerle (`Level2`, `Level3` vb.) çakışmasız şekilde birleştirme (`merge`) yapılması

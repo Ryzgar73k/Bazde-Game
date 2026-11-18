@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5384241045732949089}
   - component: {fileID: 3807036294467540839}
   - component: {fileID: 6170823751724518176}
-  - component: {fileID: 7143839494725868999}
+  - component: {fileID: 2143311344280629559}
   m_Layer: 0
   m_Name: Arka_Maya_Piramit_Kat_5.001
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &7143839494725868999
-BoxCollider:
+--- !u!64 &2143311344280629559
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,6 +109,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.015989812, y: 0.013589812, z: 0.005489809}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -5091785622202446867, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}
