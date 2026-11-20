@@ -59,10 +59,12 @@ public class ContinuousRotator : MonoBehaviour
         followedArms = new List<Transform>(arms);
     }
 
+    [HideInInspector] public bool useExplicitSetup = false;
+
     void Awake()
     {
         // Sadece dış çemberde çalış; yanlışlıkla başka nesneye takılmışsa kapat
-        if (!name.StartsWith("OnSag_Cark_Dis_Cember")) { enabled = false; return; }
+        if (!useExplicitSetup && !name.StartsWith("OnSag_Cark_Dis_Cember")) { enabled = false; return; }
 
         // Aynı nesnede çift bileşen varsa yalnızca ilki çalışsın
         var all = GetComponents<ContinuousRotator>();
@@ -70,7 +72,7 @@ public class ContinuousRotator : MonoBehaviour
 
         // Kollar listede yoksa sahneden bul
         followedArms.RemoveAll(a => a == null);
-        if (followedArms.Count == 0)
+        if (!useExplicitSetup && followedArms.Count == 0)
         {
             foreach (Transform t in FindObjectsByType<Transform>())
             {

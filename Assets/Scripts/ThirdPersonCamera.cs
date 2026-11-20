@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// Basit üçüncü şahıs takip kamerası. Ekranın sağ tarafını sürükleyerek (veya fare sağ tık) döner.
@@ -45,6 +47,7 @@ public class ThirdPersonCamera : MonoBehaviour
     Vector3 smoothedTarget;
     float currentDistance;
     readonly RaycastHit[] hitBuffer = new RaycastHit[16];
+    readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>(8);
 
     public void ApplyConfigMigration()
     {
@@ -79,8 +82,8 @@ public class ThirdPersonCamera : MonoBehaviour
         }
     }
 
-    /// <summary>Yeniden doğma sonrası kamerayı oyun başındaki bakış yönüne ve mesafesine döndürür.</summary>
-    public void ResetView()
+    /// <summary>Yeniden doğma sonrası kamerayı oyun başındaki veya belirtilen bakış yönüne döndürür.</summary>
+    public void ResetView(float? overrideYaw = null)
     {
         if (!hasInitialPose)
         {
@@ -89,7 +92,7 @@ public class ThirdPersonCamera : MonoBehaviour
             hasInitialPose = true;
         }
 
-        yaw = targetYaw = initialYaw;
+        yaw = targetYaw = overrideYaw ?? initialYaw;
         pitch = targetPitch = initialPitch;
         if (target != null) smoothedTarget = target.position;
         currentDistance = distance;
@@ -103,7 +106,14 @@ public class ThirdPersonCamera : MonoBehaviour
 
     void Update()
     {
-        // ESC tuşuyla fareyi serbest bırak / tıkla geri kilitle
+        if (VictoryUI.IsAnyVictoryVisible)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
+
+        // ESC tuşuyla fareyi serbest bırak / UI üzerine tıklanmıyorsa tıkla geri kilitle
         if (!Application.isMobilePlatform)
         {
             if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
@@ -111,7 +121,10 @@ public class ThirdPersonCamera : MonoBehaviour
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
-            if (UnityEngine.InputSystem.Mouse.current != null && UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
+            if (UnityEngine.InputSystem.Mouse.current != null
+                && UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame
+                && Cursor.lockState != CursorLockMode.Locked
+                && !IsPointerOverControlUI())
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
@@ -119,12 +132,37 @@ public class ThirdPersonCamera : MonoBehaviour
         }
     }
 
+    bool IsPointerOverControlUI()
+    {
+        if (EventSystem.current == null || UnityEngine.InputSystem.Mouse.current == null) return false;
+        var ped = new PointerEventData(EventSystem.current)
+        {
+            position = UnityEngine.InputSystem.Mouse.current.position.ReadValue()
+        };
+        uiRaycastResults.Clear();
+        EventSystem.current.RaycastAll(ped, uiRaycastResults);
+        foreach (var r in uiRaycastResults)
+        {
+            if (r.gameObject == null) continue;
+            if (r.gameObject.GetComponentInParent<LookPad>() != null) continue;
+            return true;
+        }
+        return false;
+    }
+
     void LateUpdate()
     {
+        if (VictoryUI.IsAnyVictoryVisible)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
+
         if (target == null) return;
 
         float dt = Time.deltaTime;
-        Vector2 look = PlayerInputState.Look;
+        Vector2 look = PlayerInputState.ConsumeLook();
         targetYaw += look.x;
         targetPitch = Mathf.Clamp(targetPitch - look.y, minPitch, maxPitch);
 

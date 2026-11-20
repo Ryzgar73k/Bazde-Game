@@ -71,15 +71,24 @@ public class RotatingCylinderObstacle : MonoBehaviour
         return (t.parent != null ? t.parent.GetHashCode() : 0) + "|" + suffix;
     }
 
+    [HideInInspector] public bool standalonePivot = false;
+
     void Awake()
     {
         if (handled.Contains(transform)) return; // başka bir parça grubu zaten kurdu
 
-        string key = GroupKey(transform);
+        string key = standalonePivot ? name : GroupKey(transform);
         var members = new List<RotatingCylinderObstacle>();
-        foreach (var o in FindObjectsByType<RotatingCylinderObstacle>())
+        if (standalonePivot)
         {
-            if (!handled.Contains(o.transform) && GroupKey(o.transform) == key) members.Add(o);
+            members.Add(this);
+        }
+        else
+        {
+            foreach (var o in FindObjectsByType<RotatingCylinderObstacle>())
+            {
+                if (!handled.Contains(o.transform) && GroupKey(o.transform) == key) members.Add(o);
+            }
         }
 
         bool has = false;
@@ -93,8 +102,8 @@ public class RotatingCylinderObstacle : MonoBehaviour
         }
 
         int dot = key.IndexOf('.');
-        pivot = new GameObject("Pivot_Silindir_" + (dot >= 0 ? key.Substring(dot) : "ana")).transform;
-        pivot.position = has ? b.center : transform.position;
+        pivot = new GameObject("Pivot_Silindir_" + (standalonePivot ? name : (dot >= 0 ? key.Substring(dot) : "ana"))).transform;
+        pivot.position = standalonePivot ? transform.position : (has ? b.center : transform.position);
         pivot.rotation = Quaternion.identity;
         pivot.localScale = Vector3.one;
         pivot.gameObject.AddComponent<RotatorPivotMarker>().cylinder = this;

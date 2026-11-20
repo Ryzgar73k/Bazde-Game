@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 /// <summary>
 /// Üzerine basan oyuncuyu belirli aralıklarla (varsayılan 2 saniyede bir) havaya fırlatan trambolin bileşeni.
@@ -29,6 +30,8 @@ public class TrampolinePad : MonoBehaviour
     private PlayerController cachedPlayer;
     private CharacterController cachedPlayerCC;
     private bool playerTouchReported;
+    private Vector3 originalScale;
+    private Coroutine squashRoutine;
 
     public void ApplyConfigMigration()
     {
@@ -50,9 +53,21 @@ public class TrampolinePad : MonoBehaviour
         var all = GetComponents<TrampolinePad>();
         if (all.Length > 1 && all[0] != this) { enabled = false; return; }
         ApplyConfigMigration();
+        originalScale = transform.localScale;
         padCollider = GetComponent<Collider>();
         padRenderer = GetComponent<Renderer>();
         timer = bounceImmediatelyOnStep ? bounceInterval : 0f;
+    }
+
+    void OnDisable()
+    {
+        if (squashRoutine != null)
+        {
+            StopCoroutine(squashRoutine);
+            squashRoutine = null;
+        }
+        if (originalScale.sqrMagnitude > 0.0001f)
+            transform.localScale = originalScale;
     }
 
     public void NotifyPlayerStepped(PlayerController player)
@@ -85,6 +100,7 @@ public class TrampolinePad : MonoBehaviour
             if (timer >= bounceInterval)
             {
                 cachedPlayer.Bounce(bounceHeight);
+                TriggerSquashStretch();
                 timer = 0f;
             }
         }
@@ -93,6 +109,34 @@ public class TrampolinePad : MonoBehaviour
             // Oyuncu trambolinden indiğinde sayacı sıfırla
             timer = bounceImmediatelyOnStep ? bounceInterval : 0f;
         }
+    }
+
+    void TriggerSquashStretch()
+    {
+        if (!gameObject.activeInHierarchy) return;
+        if (squashRoutine != null) StopCoroutine(squashRoutine);
+        squashRoutine = StartCoroutine(SquashStretchRoutine());
+    }
+
+    IEnumerator SquashStretchRoutine()
+    {
+        Vector3 squashed = new Vector3(originalScale.x * 1.08f, originalScale.y * 0.78f, originalScale.z * 1.08f);
+        float t = 0f;
+        while (t < 0.08f)
+        {
+            t += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(originalScale, squashed, Mathf.Clamp01(t / 0.08f));
+            yield return null;
+        }
+        t = 0f;
+        while (t < 0.16f)
+        {
+            t += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(squashed, originalScale, Mathf.Clamp01(t / 0.16f));
+            yield return null;
+        }
+        transform.localScale = originalScale;
+        squashRoutine = null;
     }
 
     private bool IsPlayerOnTrampoline()

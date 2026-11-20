@@ -409,23 +409,27 @@ namespace ParkourGame.Editor
                 else others.Add(t);
             }
 
+            bool hasLegacyLevel = GameObject.Find("level-one") != null;
             bool dirty = false;
 
-            // Yanlışlıkla başka nesnelere (örn. 'doner' parent'ı, kollar) takılmış döndürücüleri temizle
-            foreach (Transform t in wheelArms.ToArray())
+            if (hasLegacyLevel)
             {
-                var r = t.GetComponent<ContinuousRotator>();
-                if (r != null) { Object.DestroyImmediate(r); dirty = true; }
-            }
-            foreach (Transform t in others)
-            {
-                var r = t.GetComponent<ContinuousRotator>();
-                if (r != null && t.GetComponentInParent<PlayerController>() == null) { Object.DestroyImmediate(r); dirty = true; }
-                var c = t.GetComponent<RotatingCylinderObstacle>();
-                if (c != null) { Object.DestroyImmediate(c); dirty = true; }
-                if (t.name == "doner" && t.GetComponent<MeshCollider>() != null && t.GetComponent<MeshFilter>() == null)
+                // Yanlışlıkla başka nesnelere (örn. 'doner' parent'ı, kollar) takılmış döndürücüleri temizle
+                foreach (Transform t in wheelArms.ToArray())
                 {
-                    Object.DestroyImmediate(t.GetComponent<MeshCollider>()); dirty = true;
+                    var r = t.GetComponent<ContinuousRotator>();
+                    if (r != null) { Object.DestroyImmediate(r); dirty = true; }
+                }
+                foreach (Transform t in others)
+                {
+                    var r = t.GetComponent<ContinuousRotator>();
+                    if (r != null && t.GetComponentInParent<PlayerController>() == null) { Object.DestroyImmediate(r); dirty = true; }
+                    var c = t.GetComponent<RotatingCylinderObstacle>();
+                    if (c != null) { Object.DestroyImmediate(c); dirty = true; }
+                    if (t.name == "doner" && t.GetComponent<MeshCollider>() != null && t.GetComponent<MeshFilter>() == null)
+                    {
+                        Object.DestroyImmediate(t.GetComponent<MeshCollider>()); dirty = true;
+                    }
                 }
             }
 

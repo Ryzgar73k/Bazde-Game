@@ -75,6 +75,13 @@ public class FootIK : MonoBehaviour
     [Header("Duvar Koruması")]
     public bool checkShinWallClearance = true;
 
+    [Header("Eğim Gövde Eğilmesi")]
+    public bool enableSlopeBodyLean = true;
+    public float uphillMaxPitch = 15f;
+    public float downhillMaxPitch = 9f;
+    public float maxSlopeSideRoll = 6f;
+    public float slopeLeanSpeed = 8f;
+
     struct FootSideState
     {
         public float smoothWeight;
@@ -97,10 +104,14 @@ public class FootIK : MonoBehaviour
     Transform rootTransform;
     Transform leftUpperLeg;
     Transform rightUpperLeg;
+    Transform spineBone;
+    Transform chestBone;
 
     readonly RaycastHit[] hitBuffer = new RaycastHit[16];
     float ikBlend;
     float currentPelvisOffset;
+    float currentSlopePitch;
+    float currentSlopeRoll;
     FootSideState leftState;
     FootSideState rightState;
 
@@ -116,6 +127,8 @@ public class FootIK : MonoBehaviour
         {
             leftUpperLeg = anim.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
             rightUpperLeg = anim.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+            spineBone = anim.GetBoneTransform(HumanBodyBones.Spine);
+            chestBone = anim.GetBoneTransform(HumanBodyBones.Chest);
         }
     }
 
@@ -128,12 +141,15 @@ public class FootIK : MonoBehaviour
         float dt = Time.deltaTime;
         if (dt <= 0f) return;
 
+        ApplyMantleHandIK();
+
         bool isGrounded = playerController == null || playerController.IsGrounded;
         bool isJumpingUp = playerController != null && playerController.VerticalVelocity > 1.2f;
+        bool isMantling = playerController != null && playerController.IsMantling;
         float speed = anim.GetFloat(SpeedParam);
 
         float speedIkFade = 1f - Mathf.InverseLerp(runIkFadeStart, runIkFadeEnd, speed);
-        float targetBlend = (isGrounded && !isJumpingUp) ? speedIkFade : 0f;
+        float targetBlend = (isGrounded && !isJumpingUp && !isMantling) ? speedIkFade : 0f;
         ikBlend = Mathf.MoveTowards(ikBlend, targetBlend, dt * ikWeightLerpSpeed);
 
         Vector3 animLeftPos = anim.GetIKPosition(AvatarIKGoal.LeftFoot);
@@ -228,6 +244,95 @@ public class FootIK : MonoBehaviour
             refRight,
             dt,
             ref rightState);
+    }
+
+    void LateUpdate()
+    {
+        if (!enableSlopeBodyLean || anim == null || !anim.isHuman || spineBone == null) return;
+        float dt = Time.deltaTime;
+        if (dt <= 0f) return;
+
+        bool grounded = playerController == null || (playerController.IsGrounded && !playerController.IsMantling);
+        float targetPitch = 0f;
+        float targetRoll = 0f;
+        Vector3 refFwd = rootTransform != null ? rootTransform.forward : transform.forward;
+        Vector3 refRight = rootTransform != null ? rootTransform.right : transform.right;
+
+        if (grounded)
+        {
+            Vector3 rootPos = rootTransform != null ? rootTransform.position : transform.position;
+            float floorY = transform.position.y;
+            bool hasHit = TryRaycastBestGround(
+                new Vector3(rootPos.x, floorY + raycastUpOffset, rootPos.z),
+                raycastUpOffset + raycastDownDistance,
+                floorY - maxPelvisDrop - 0.15f,
+                floorY + maxFootRise,
+                out RaycastHit hit);
+
+            if (hasHit && hit.normal.y < 0.992f)
+            {
+                float speed = anim.GetFloat(SpeedParam);
+                float moveFactor = Mathf.Lerp(0.25f, 1f, Mathf.InverseLerp(0.15f, 2.5f, speed));
+                float uphillDeg = Mathf.Asin(Mathf.Clamp(-Vector3.Dot(refFwd, hit.normal), -0.95f, 0.95f)) * Mathf.Rad2Deg;
+                if (uphillDeg > 3f)
+                    targetPitch = Mathf.Min(uphillMaxPitch, uphillDeg * 0.58f) * moveFactor;
+                else if (uphillDeg < -3f)
+                    targetPitch = Mathf.Max(-downhillMaxPitch, uphillDeg * 0.36f) * moveFactor;
+
+                float sideDeg = Mathf.Asin(Mathf.Clamp(Vector3.Dot(refRight, hit.normal), -0.95f, 0.95f)) * Mathf.Rad2Deg;
+                if (Mathf.Abs(sideDeg) > 4f)
+                    targetRoll = Mathf.Clamp(-sideDeg * 0.25f, -maxSlopeSideRoll, maxSlopeSideRoll) * moveFactor;
+            }
+        }
+
+        float damp = 1f - Mathf.Exp(-slopeLeanSpeed * dt);
+        currentSlopePitch = Mathf.Lerp(currentSlopePitch, targetPitch, damp);
+        currentSlopeRoll = Mathf.Lerp(currentSlopeRoll, targetRoll, damp);
+
+        if (Mathf.Abs(currentSlopePitch) > 0.05f || Mathf.Abs(currentSlopeRoll) > 0.05f)
+        {
+            if (chestBone != null)
+            {
+                spineBone.rotation = Quaternion.AngleAxis(currentSlopePitch * 0.45f, refRight)
+                    * Quaternion.AngleAxis(currentSlopeRoll * 0.45f, refFwd)
+                    * spineBone.rotation;
+                chestBone.rotation = Quaternion.AngleAxis(currentSlopePitch * 0.55f, refRight)
+                    * Quaternion.AngleAxis(currentSlopeRoll * 0.55f, refFwd)
+                    * chestBone.rotation;
+            }
+            else
+            {
+                spineBone.rotation = Quaternion.AngleAxis(currentSlopePitch, refRight)
+                    * Quaternion.AngleAxis(currentSlopeRoll, refFwd)
+                    * spineBone.rotation;
+            }
+        }
+    }
+
+    void ApplyMantleHandIK()
+    {
+        if (playerController != null && playerController.IsMantleHandIKActive)
+        {
+            float mp = playerController.MantleProgress;
+            float w = mp < 0.12f
+                ? Mathf.InverseLerp(0f, 0.12f, mp)
+                : (mp < 0.62f ? 1f : 1f - Mathf.InverseLerp(0.62f, 0.88f, mp));
+
+            anim.SetIKPositionWeight(AvatarIKGoal.LeftHand, w);
+            anim.SetIKPosition(AvatarIKGoal.LeftHand, playerController.MantleLeftHandPos);
+            anim.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
+
+            anim.SetIKPositionWeight(AvatarIKGoal.RightHand, w);
+            anim.SetIKPosition(AvatarIKGoal.RightHand, playerController.MantleRightHandPos);
+            anim.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+        }
+        else
+        {
+            anim.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
+            anim.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
+            anim.SetIKPositionWeight(AvatarIKGoal.RightHand, 0f);
+            anim.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+        }
     }
 
     void FadeOutIK(
