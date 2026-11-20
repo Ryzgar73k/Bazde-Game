@@ -313,16 +313,16 @@ public static class AnimationSetupTool
         if (clips.idle != null) locomotionTree.AddChild(clips.idle, 0f);
         if (clips.walk != null && clips.run != null && clips.sprint != null)
         {
-            locomotionTree.AddChild(clips.walk, 1.6f);
-            locomotionTree.AddChild(clips.run, 3.2f);
-            locomotionTree.AddChild(clips.sprint, 5.4f);
+            locomotionTree.AddChild(clips.walk, 1.4f);
+            locomotionTree.AddChild(clips.run, 2.8f);
+            locomotionTree.AddChild(clips.sprint, 4.5f);
             var children = locomotionTree.children;
             if (children.Length == 4)
             {
                 children[0].timeScale = 1.0f;
-                children[1].timeScale = 1.15f;
-                children[2].timeScale = 1.18f;
-                children[3].timeScale = 1.25f;
+                children[1].timeScale = 1.02f;
+                children[2].timeScale = 1.06f;
+                children[3].timeScale = 1.10f;
                 locomotionTree.children = children;
             }
         }

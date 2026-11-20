@@ -9,17 +9,17 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Hareket")]
-    public float walkSpeed = 2.5f;
-    public float runSpeed = 5.6f;
-    public float acceleration = 45f;
-    public float deceleration = 38f;
+    public float walkSpeed = 2.1f;
+    public float runSpeed = 4.5f;
+    public float acceleration = 28f;
+    public float deceleration = 32f;
     [Tooltip("Ters yöne dönerken uygulanan ivme çarpanı")]
-    public float turnAccelerationMultiplier = 1.7f;
+    public float turnAccelerationMultiplier = 1.35f;
     [Range(0f, 1f)]
     public float airControl = 0.85f; // Havada ileri/yön kontrolü korunsun
     [Tooltip("Havada yön tuşları bırakıldığında uygulanan hava direnci")]
     public float airReleaseDrag = 9.0f;
-    public float turnSpeed = 900f;
+    public float turnSpeed = 390f;
 
     [Header("Zıplama")]
     public float jumpHeight = 1.70f;
@@ -33,7 +33,7 @@ public class PlayerController : MonoBehaviour
     [Range(1f, 2.5f)]
     public float fallGravityMultiplier = 1.35f;
     [Tooltip("Trambolinden fırlarken yatay hız tavanı (platformu aşmayı önler)")]
-    public float trampolineMaxHorizSpeed = 5.0f;
+    public float trampolineMaxHorizSpeed = 4.3f;
     public float coyoteTime = 0.16f;
     public float jumpBufferTime = 0.16f;
     [Tooltip("Zıplamada root motion kapsülü sürüklesin mi? Kapalı tutarak yerinde zıplama ve havada kontrol korunur.")]
@@ -68,7 +68,7 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Karakterin oyuncu tarafından kontrol edilip edilemeyeceğini belirler (bitiş ekranında kapatılır)")]
     public bool canControl = true;
 
-    public const int LatestConfigVersion = 9;
+    public const int LatestConfigVersion = 10;
 
     [HideInInspector] public int configVersion = 0;
 
@@ -214,6 +214,17 @@ public class PlayerController : MonoBehaviour
             runSpeed = 5.6f;
             trampolineMaxHorizSpeed = 5.0f;
             configVersion = 9;
+        }
+        if (configVersion < 10)
+        {
+            walkSpeed = 2.1f;
+            runSpeed = 4.5f;
+            acceleration = 28f;
+            deceleration = 32f;
+            turnAccelerationMultiplier = 1.35f;
+            turnSpeed = 390f;
+            trampolineMaxHorizSpeed = 4.3f;
+            configVersion = 10;
         }
     }
 
@@ -420,7 +431,7 @@ public class PlayerController : MonoBehaviour
         if (wishNormalized.sqrMagnitude > 0.0001f)
         {
             Quaternion targetRot = Quaternion.LookRotation(wishNormalized, Vector3.up);
-            float rotRate = Mathf.Clamp(turnSpeed / 60f, 6f, 24f);
+            float rotRate = Mathf.Clamp(turnSpeed / 60f, 3.0f, 20f);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-rotRate * dt));
             float dot = Vector3.Dot(transform.forward, wishNormalized);
             alignment = Mathf.Clamp01((dot + 0.3f) / 1.3f);

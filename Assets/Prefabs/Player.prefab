@@ -71,27 +71,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b424602f5554d5647b8fd7a3f659704d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 4
-  runSpeed: 7.2
-  acceleration: 45
-  deceleration: 38
-  turnAccelerationMultiplier: 1.7
+  walkSpeed: 2.1
+  runSpeed: 4.5
+  acceleration: 28
+  deceleration: 32
+  turnAccelerationMultiplier: 1.35
   airControl: 0.85
   airReleaseDrag: 9
-  turnSpeed: 900
+  turnSpeed: 390
   jumpHeight: 1.7
   jumpForwardBoost: 0
   gravity: -26
   lowJumpGravityMultiplier: 2.6
   fallGravityMultiplier: 1.35
-  trampolineMaxHorizSpeed: 5.2
+  trampolineMaxHorizSpeed: 4.3
   coyoteTime: 0.16
   jumpBufferTime: 0.16
   useRootMotionInJump: 0
   enableAutoMantle: 1
   mantleMinHeight: 0.22
-  mantleMaxHeight: 0.82
-  mantleDuration: 0.42
+  mantleMaxHeight: 1.05
+  mantleDuration: 0.54
   maxStepHeight: 0.24
   maxSlopeAngle: 55
   edgeSlideSpeed: 3.6
@@ -99,7 +99,7 @@ MonoBehaviour:
   animator: {fileID: 3885790709283852137}
   rootMotionJumpScale: 1
   canControl: 1
-  configVersion: 7
+  configVersion: 10
   killY: -1.5
 --- !u!1001 &7243916468937569016
 PrefabInstance:
