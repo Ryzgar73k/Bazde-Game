@@ -49,35 +49,33 @@ Proje açıldığında boş bir sahne gelirse **Project** penceresinden şu sahn
 - **KayKit Standart Sahneler (`Assets/Scenes/`):**
   - `Level1.unity` -> `Level2.unity` -> `Level3.unity` -> `Level4.unity` -> `Level1.unity` döngüsü kuruludur.
   - Ortak kurucu `Assets/Scripts/Editor/KayKitLevelKit.cs`, 1–3 kurucusu `KayKitLevelsBuilder.cs`, 4. bölüm kurucusu `Level4Builder.cs` içindedir.
-- **Karakter ve Kamera (`PlayerController` v7 / `ThirdPersonCamera` v2):**
-  - `PlayerController.cs`: Mobile-First ayarlar (`walkSpeed = 4.0`, `runSpeed = 7.2`, `acceleration = 45`, `jumpHeight = 1.70`, `lowJumpGravityMultiplier = 2.6`, `fallGravityMultiplier = 1.35`, `trampolineMaxHorizSpeed = 5.2`, `coyoteTime = 0.16`, `jumpBufferTime = 0.16`, `mantleDuration = 0.42`).
-  - **Auto Ledge Mantle:** Statik platform kenarlarında (`0.22m..0.82m` yükselme bandı) duvar normaline dik hizalanarak (`0.42s`) otomatik tırmanma; tehlikeler (`TimedSpikeTrap`, `RotatingHazard`, `KillZone`), trambolin ve hareketli/dönen platformlarda tetiklenmez.
-  - **`dev/umutcan` Uyumlu Korumalar ve Sistemler:** `Checkpoint` (disk `BoxCollider` + direk `CapsuleCollider` katı çarpıştırıcılı), `RespawnManager`, `MovingPlatform`, `KillZone`, `LevelGoal`, `VictoryUI` (`VictoryUI.IsAnyVictoryVisible` ile imleç kilidini otomatik açar), `PressureButton`, `ActivatedBridge`, `TimedSpikeTrap`, `RotatingHazard` (`CenterHubBlocker` merkez çarpıştırıcılı, `11.5 m/s` dışarı savurma), `LevelHUD`, `MobileControlsUI` içindeki `EventSystem` + `InputSystemUIInputModule.AssignDefaultActions()` ve trambolin yatay hız tavanı (`airHorizSpeedCap = 5.2`).
-  - **Diğer Çekirdek Bileşenler:** `TrampolinePad.cs` (squash-stretch animasyonlu fırlatma), `ContinuousRotator.cs` (`useExplicitSetup` desteği), `RotatingCylinderObstacle.cs` (`standalonePivot` desteği, `95..115 deg/s` dönüş + `playerPushMultiplier = 0.45`), `FootIK.cs` (ayak IK + eğimde gövde ileri/geri/yan eğilmesi), `RootMotionRelay.cs`.
+  - Yön tabelaları (`signage_arrows_*`), bitiş/başlangıç kemerleri ve checkpoint direkleri katı çarpıştırıcılıdır (`BoxCollider` / `CapsuleCollider`).
+- **Karakter ve Kamera (`PlayerController` v10 / `ThirdPersonCamera` v2):**
+  - `PlayerController.cs`: Dengelenmiş parkur ayarları (`walkSpeed = 2.1`, `runSpeed = 4.5`, `acceleration = 28`, `deceleration = 32`, `turnAccelerationMultiplier = 1.35`, `turnSpeed = 390`, `jumpHeight = 1.70`, `lowJumpGravityMultiplier = 2.6`, `fallGravityMultiplier = 1.35`, `trampolineMaxHorizSpeed = 4.3`, `coyoteTime = 0.16`, `jumpBufferTime = 0.16`, `mantleDuration = 0.54`).
+  - `ThirdPersonCamera.cs` & `PlayerInputState.cs`: DPI ölçekli mobil bakış hassasiyeti (`0.135` yatay / `0.105` dikey), yatay/dikey takip yumuşatması ve duvar çarpışma önleme.
+  - **Auto Ledge Mantle & El IK:** Statik platform kenarlarında (`0.22m..1.05m` yükselme bandı) duvar normaline dik hizalanarak (`0.54s`) `FootIK.ApplyMantleHandIK` el tutunmasıyla otomatik tırmanma; tehlikeler (`TimedSpikeTrap`, `RotatingHazard`, `KillZone`), trambolin ve hareketli/dönen platformlarda tetiklenmez.
+  - **`dev/umutcan` Uyumlu Korumalar ve Sistemler:** `Checkpoint` (disk `BoxCollider` + direk `CapsuleCollider` katı çarpıştırıcılı), `RespawnManager`, `MovingPlatform` (`FrameDelta` + `GetComponent<PlayerController>() == null`), `KillZone`, `LevelGoal`, `VictoryUI` (+ `LevelHUD` yıldız/elmas özeti ve imleç kilidini otomatik açma), `PressureButton`, `ActivatedBridge`, `TimedSpikeTrap`, `RotatingHazard` (`CenterHubBlocker` merkez çarpıştırıcılı, `11.5 m/s` dışarı savurma), `MobileControlsUI` (`EventSystem` + `InputSystemUIInputModule.AssignDefaultActions()`) ve trambolin hız tavanı (`airHorizSpeedCap = 4.3`).
+  - **Diğer Çekirdek Bileşenler:** `TrampolinePad.cs` (squash-stretch ve dinamik `BounceSpeed`), `ContinuousRotator.cs` (`useExplicitSetup` desteği), `RotatingCylinderObstacle.cs` (`standalonePivot` desteği, 4 segment / 8m genişlik, `130..160 deg/s` dönüş, `playerPushMultiplier = 0.56`), `FootIK.cs` (ayak IK + eğimde gövde eğimi + tırmanma el IK), `RootMotionRelay.cs`.
+- **Android / Mobil Yapılandırma:** `com.bazde.parkur`, yatay (*Landscape*) kilitli, `IL2CPP` + `ARM64`, Android API 26+, `vulkanEnablePreTransform = 0`, `Mobile_RPAsset` (`RenderScale = 1.0`, `2048` 2-kaskadlı yumuşak gölge, `MSAA` kapalı).
 - **Eski Referans Varlıklar:** `Assets/Models/level-one.fbx`, `Assets/Prefabs/Parkur3D/` ve `LevelBoxColliderTool.cs` (eski sahne kontrolü korumalı) geriye dönük uyumluluk için tutulur.
 
 ---
 
-## Mixamo Animasyon Seti (`Assets/Animations/` + `X Bot@Running.fbx`)
+## Animasyon Seti (`Kevin Iglesias HumanM` + `Mixamo`)
 
-`PlayerAnimatorController.controller` 8 durumlu (`Locomotion`, `JumpUp`, `RunJump`, `FallLoop`, `Bounce`, `BounceTwist`, `Land`, `Mantle`) yapıda kuruludur; `AnimationSetupTool.cs` kare kırpmalarını, `In Place` olmayan kliplerde kök XZ çıkarımını ve Humanoid dönüş/kalça hizasını otomatik ayarlar (`Tools > Parkur > Animasyonları Ayarla ve Bağla`). `FallLoop` yalnızca yüksek düşüşlerde (`VerticalVelocity < -7.0` / `-11.5` / `-8.5`) devreye girer.
+`PlayerAnimatorController.controller` 9 durumlu (`Locomotion`, `JumpUp`, `RunJump`, `InAir`, `FallLoop`, `Bounce`, `BounceTwist`, `Land`, `Mantle`) yapıda kuruludur; `AnimationSetupTool.cs` kırpılmış zıplama/iniş kliplerini ve Humanoid ayarlarını otomatik bağlar (`Tools > Parkur > Animasyonları Ayarla ve Bağla`).
 
-- [x] **`Anim_Idle`** *(Breathing Idle)* — Loop
-- [x] **Walk / Run (`Assets/X Bot@Running.fbx`)** — BlendTree `4.0 m/s` (`0.72x` hız) ve `7.2 m/s` (`1.05x` hız)
-- [x] **`Anim_JumpUp`** *(Jumping, `12..32f` kırpılmış; dururken/yürürken)* — Loop kapalı
-- [x] **`Anim_RunJump`** *(Running Jump, `0..20f` kırpılmış; koşarken zıplama)* — Loop kapalı
-- [x] **`Anim_FallLoop`** *(Falling Idle — yalnız yüksek düşüşte)* — Loop açık
-- [x] **`Anim_Land`** *(Falling To Landing, `8..26f` kırpılmış)* — Loop kapalı
-- [x] **`Anim_Bounce_1`** *(Front Flip, `13..45f` kırpılmış)* & **`Anim_Bounce_2`** *(Front Twist Flip, `15..44f` kırpılmış)* — Trambolinde %50/%50 rastgele takla
-- [x] **`Anim_Mantle`** *(Braced Hang To Crouch, `3..29f` kırpılmış, `1.65x` hız)* — Duvara dik hizalı kenar tırmanma
+- [x] **Locomotion (`HumanM` BlendTree):** `Idle01` (`0`) -> `Walk01_Forward` (`1.4 m/s`, `1.02x`) -> `Run01_Forward` (`2.8 m/s`, `1.06x`) -> `Sprint01_Forward` (`4.5 m/s`, `1.10x`)
+- [x] **`JumpUp` & `RunJump` (`BM_JumpAir_Clean.anim`):** `HumanM@Jump01 - Begin` kırpılmış temiz klip (`0.00..0.44s`; `0.68x` / `0.72x` hız — eller omuz hizası altında kalır)
+- [x] **`Land` (`BM_JumpLand_Clean.anim`):** `HumanM@Jump01 - Land` kırpılmış temiz klip (`0.17..0.56s`, `1.25x` hız)
+- [x] **`InAir` (`HumanM@Fall01`) & `FallLoop` (`Anim_FallLoop`):** Yalnızca gerçek boşluk düşüşlerinde (`InAir < -6.5 / -16.0`, `FallLoop < -14.0 / -19.5 / -23.0`) devreye girer
+- [x] **`Bounce` & `BounceTwist` (`Anim_Bounce_1` / `Anim_Bounce_2`):** Trambolinde %50/%50 rastgele takla; uçuş süresine göre dinamik `BounceSpeed` (`0.56..0.82`)
+- [x] **`Mantle` (`Anim_Mantle`):** Braced Hang To Crouch (`3..29f` kırpılmış, `1.28x` hız + `FootIK` el tutunması)
 
 ---
 
 ## Yol Haritası
 
-- [x] **KayKit 4-Level Standardı (`Level1`–`Level4`):** Tek paket ve ortak kurucu (`KayKitLevelKit`) ile oynanabilir 4 seviye ve Build Settings entegrasyonu
-- [x] **Mobil-Öncelikli Kontrol ve Hissiyat Revizyonu:** Analog yürüme/koşma joystick'i (`WalkRunRing`), tek `ZIPLA` butonu, çoklu dokunuş `LookPad`, duvara hizalı Auto Ledge Mantle, trambolin hız tavanı (`5.2 m/s`), eğimde gövde eğilmesi ve squash-stretch
-- [x] **`dev/umutcan` Sistemlerinin Adaptasyonu:** `Checkpoint`, `RespawnManager`, `MovingPlatform`, `KillZone`, `LevelGoal`, `VictoryUI` (+ imleç açma) ve `EventSystem` varsayılan aksiyonları
-- [x] **Mixamo Animasyon Paketinin Bağlanması:** `Assets/Animations/` + `X Bot@Running.fbx` kare kırpmaları, `RunJump` ayrımı ve `Bounce` varyasyonlarıyla bağlandı
+- [x] **Faz 1 — KayKit 4-Level, Kontrol, Animasyon & Mobil APK (`v0.1.0`):** `Level1`–`Level4` KayKit kurulumu, `dev/umutcan` mekaniklerinin uyarlanması, `HumanM` + Mixamo hibrit animasyonlar, Foot/Hand IK, hız & dönüş dengesi, Android URP/Vulkan düzeltmeleri ve telefon testi (PR `#2` & Release `v0.1.0`)
+- [ ] **Faz 2 — Oyun Hissi ("Juice"), Fizik Tepkileri & Görsel Çeşitlilik:** Çarpma/itmede sendeleme (*stagger*) veya yüksek düşüşte *ragdoll* değerlendirmesi, eğimde ek gövde uyumu, yıldız/buton/trambolin için parlama (*pulse*), *camera shake*, parçacık/ses efektleri ve kompleks kit birleşimleri
 - [ ] **Ses Efektleri ve Ana/Duraklatma Menüleri:** Zıplama, koşma, trambolin sesleri ve başlangıç/duraklatma (`ESC`) arayüzü
-- [ ] **Final İnceleme ve Branch Birleştirme:** Kullanıcı incelemesi tamamlandıktan sonra push ve `dev/umutcan` ile final birleştirme
