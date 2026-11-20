@@ -52,13 +52,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.9
-  m_Radius: 0.35
+  m_Height: 1.08
+  m_Radius: 0.16
   m_SlopeLimit: 55
-  m_StepOffset: 0.45
-  m_SkinWidth: 0.08
+  m_StepOffset: 0.24
+  m_SkinWidth: 0.025
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 3.25, z: 0}
+  m_Center: {x: 0, y: 2.785, z: 0}
 --- !u!114 &3331698592316995550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,21 +71,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b424602f5554d5647b8fd7a3f659704d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  walkSpeed: 3
+  walkSpeed: 2.1
   runSpeed: 4.5
-  acceleration: 40
+  acceleration: 28
+  deceleration: 32
+  turnAccelerationMultiplier: 1.35
   airControl: 0.85
-  turnSpeed: 300
-  jumpHeight: 2.6
-  jumpForwardBoost: 4
+  airReleaseDrag: 9
+  turnSpeed: 390
+  jumpHeight: 1.7
+  jumpForwardBoost: 0
   gravity: -26
-  coyoteTime: 0.12
-  jumpBufferTime: 0.12
-  maxStepHeight: 0.45
+  lowJumpGravityMultiplier: 2.6
+  fallGravityMultiplier: 1.35
+  trampolineMaxHorizSpeed: 4.3
+  coyoteTime: 0.16
+  jumpBufferTime: 0.16
+  useRootMotionInJump: 0
+  enableAutoMantle: 1
+  mantleMinHeight: 0.22
+  mantleMaxHeight: 1.05
+  mantleDuration: 0.54
+  maxStepHeight: 0.24
   maxSlopeAngle: 55
+  edgeSlideSpeed: 3.6
   cameraTransform: {fileID: 0}
   animator: {fileID: 3885790709283852137}
   rootMotionJumpScale: 1
+  canControl: 1
+  configVersion: 10
+  killY: -1.5
 --- !u!1001 &7243916468937569016
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -112,7 +127,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.29
+      value: 2.22
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
       propertyPath: m_LocalPosition.z
@@ -169,7 +184,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7067138213710887458}
   m_SourcePrefab: {fileID: 100100000, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
 --- !u!95 &3885790709283852137 stripped
 Animator:
@@ -181,3 +199,54 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
   m_PrefabInstance: {fileID: 7243916468937569016}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7513946431077289897 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ab1a16d5f35a2ca4e9857c1c66bc7fcc, type: 3}
+  m_PrefabInstance: {fileID: 7243916468937569016}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7067138213710887458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7513946431077289897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20e2e8bf45b7f6d4688cfb1e597f9d57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootIK
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  footCastRadius: 0.032
+  raycastUpOffset: 0.25
+  raycastDownDistance: 0.6
+  maxFootRise: 0.2
+  minWalkableNormalY: 0.65
+  minSoleHeight: 0.035
+  maxSoleHeight: 0.068
+  footGroundOffset: 0
+  flatDeadzoneHeight: 0.015
+  flatDeadzoneNormalY: 0.97
+  footHeightLerpSpeed: 1.8
+  maxPelvisDrop: 0.18
+  pelvisLerpSpeed: 9
+  pelvisUpLerpSpeed: 13
+  ikWeightLerpSpeed: 14
+  maxSlopeAlignAngle: 26
+  maxSideRollAngle: 14
+  kneeHintWeight: 0.35
+  kneeForwardOffset: 0.22
+  kneeOutwardOffset: 0.012
+  runIkFadeStart: 0.6
+  runIkFadeEnd: 2.4
+  kneeHintFadeEnd: 1.2
+  cornerEdgeDropThreshold: 0.12
+  edgeBevelNormalThreshold: 0.84
+  checkShinWallClearance: 1
+  enableSlopeBodyLean: 1
+  uphillMaxPitch: 15
+  downhillMaxPitch: 9
+  maxSlopeSideRoll: 6
+  slopeLeanSpeed: 8

@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,7 +26,6 @@ public static class FixRemyMaterials
         importer.ExtractTextures(texFolder);
 
         // Materyal ayarlarını güncelle
-        importer.materialLocation = ModelImporterMaterialLocation.External;
         importer.materialName = ModelImporterMaterialName.BasedOnMaterialName;
         importer.materialSearch = ModelImporterMaterialSearch.Everywhere;
         importer.SaveAndReimport();

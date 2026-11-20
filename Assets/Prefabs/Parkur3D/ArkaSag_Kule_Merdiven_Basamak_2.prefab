@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2887689066943661756}
   - component: {fileID: 8357405512699329181}
   - component: {fileID: 9077249823375046331}
-  - component: {fileID: 5993212466795705174}
+  - component: {fileID: 7443250690831361858}
   m_Layer: 0
   m_Name: ArkaSag_Kule_Merdiven_Basamak_2
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &5993212466795705174
-BoxCollider:
+--- !u!64 &7443250690831361858
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,6 +109,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.002, y: 0.002, z: 0.015}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3887988491406548137, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

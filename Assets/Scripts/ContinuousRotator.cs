@@ -7,6 +7,7 @@ using System.Collections.Generic;
 /// o pivot döndürülür. Böylece eşit olmayan ölçekli (non-uniform) nesnelerde şekil bozulması olmaz
 /// ve çember ile kollar tek parça gibi döner.
 /// </summary>
+[DefaultExecutionOrder(-20)]
 public class ContinuousRotator : MonoBehaviour
 {
     public enum Axis
@@ -23,8 +24,6 @@ public class ContinuousRotator : MonoBehaviour
 
     [Tooltip("Saniyedeki dönüş hızı (Derece). Ters yöne dönmesi için eksi (-) değer verin.")]
     public float rotationSpeed = 90f;
-
-    [HideInInspector] public Space rotationSpace = Space.World;
 
     [Tooltip("Sadece 'OzelEksen' seçiliyse kullanılır (dünya ekseni)")]
     public Vector3 customAxis = Vector3.up;
@@ -60,10 +59,12 @@ public class ContinuousRotator : MonoBehaviour
         followedArms = new List<Transform>(arms);
     }
 
+    [HideInInspector] public bool useExplicitSetup = false;
+
     void Awake()
     {
         // Sadece dış çemberde çalış; yanlışlıkla başka nesneye takılmışsa kapat
-        if (!name.StartsWith("OnSag_Cark_Dis_Cember")) { enabled = false; return; }
+        if (!useExplicitSetup && !name.StartsWith("OnSag_Cark_Dis_Cember")) { enabled = false; return; }
 
         // Aynı nesnede çift bileşen varsa yalnızca ilki çalışsın
         var all = GetComponents<ContinuousRotator>();
@@ -71,9 +72,9 @@ public class ContinuousRotator : MonoBehaviour
 
         // Kollar listede yoksa sahneden bul
         followedArms.RemoveAll(a => a == null);
-        if (followedArms.Count == 0)
+        if (!useExplicitSetup && followedArms.Count == 0)
         {
-            foreach (Transform t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+            foreach (Transform t in FindObjectsByType<Transform>())
             {
                 if (t != transform && t.name.StartsWith("OnSag_Cark_Kol")) followedArms.Add(t);
             }
@@ -99,6 +100,14 @@ public class ContinuousRotator : MonoBehaviour
         pivot.gameObject.AddComponent<RotatorPivotMarker>().wheel = this;
 
         foreach (Transform p in parts) p.SetParent(pivot, true);
+        foreach (Transform arm in followedArms)
+        {
+            if (arm == null) continue;
+            foreach (var mc in arm.GetComponentsInChildren<MeshCollider>(true))
+            {
+                mc.convex = true;
+            }
+        }
     }
 
     void Update()
@@ -116,5 +125,13 @@ public class ContinuousRotator : MonoBehaviour
         Vector3 d = rotated - r;
         d.y = 0f;
         return d;
+    }
+
+    /// <summary>Verilen dünya noktasındaki dönme teğet hızı (m/sn).</summary>
+    public Vector3 GetPointVelocity(Vector3 worldPoint)
+    {
+        if (pivot == null) return Vector3.zero;
+        Vector3 omega = CurrentWorldAxis * (rotationSpeed * Mathf.Deg2Rad);
+        return Vector3.Cross(omega, worldPoint - pivot.position);
     }
 }

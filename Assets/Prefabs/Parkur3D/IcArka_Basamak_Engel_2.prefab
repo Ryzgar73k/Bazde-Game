@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5958887437944547262}
   - component: {fileID: 3434510003476536126}
   - component: {fileID: 9010482620226254652}
-  - component: {fileID: 8648983121782005510}
+  - component: {fileID: 3656571969512592608}
   m_Layer: 0
   m_Name: IcArka_Basamak_Engel_2
   m_TagString: Untagged
@@ -92,8 +92,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8648983121782005510
-BoxCollider:
+--- !u!64 &3656571969512592608
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -110,6 +110,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.018989809, y: 0.051989816, z: 0.0055898074}
-  m_Center: {x: 0, y: 0.017000008, z: -0.0017000004}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3129373644499096431, guid: 54773aa8e3c5cec4a9d55c222ea2f0f2, type: 3}

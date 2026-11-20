@@ -6,6 +6,7 @@ using System.Collections.Generic;
 /// Aynı gruptaki parçalar (aynı parent + aynı ".001" soneki) oyun başında ölçeği 1 olan ortak bir
 /// pivotun altına alınır ve grup tek parça gibi döner. Her grup kendi merkezinde döner.
 /// </summary>
+[DefaultExecutionOrder(-20)]
 public class RotatingCylinderObstacle : MonoBehaviour
 {
     public enum Axis
@@ -23,8 +24,6 @@ public class RotatingCylinderObstacle : MonoBehaviour
 
     [Tooltip("Saniyedeki dönüş hızı (Derece). Ters yöne dönmesi için eksi (-) değer verin.")]
     public float rotationSpeed = 35f;
-
-    [HideInInspector] public Space rotationSpace = Space.World;
 
     [Tooltip("Sadece 'OzelEksen' seçiliyse kullanılır (dünya ekseni)")]
     public Vector3 customAxis = Vector3.up;
@@ -72,15 +71,24 @@ public class RotatingCylinderObstacle : MonoBehaviour
         return (t.parent != null ? t.parent.GetHashCode() : 0) + "|" + suffix;
     }
 
+    [HideInInspector] public bool standalonePivot = false;
+
     void Awake()
     {
         if (handled.Contains(transform)) return; // başka bir parça grubu zaten kurdu
 
-        string key = GroupKey(transform);
+        string key = standalonePivot ? name : GroupKey(transform);
         var members = new List<RotatingCylinderObstacle>();
-        foreach (var o in FindObjectsByType<RotatingCylinderObstacle>(FindObjectsSortMode.None))
+        if (standalonePivot)
         {
-            if (!handled.Contains(o.transform) && GroupKey(o.transform) == key) members.Add(o);
+            members.Add(this);
+        }
+        else
+        {
+            foreach (var o in FindObjectsByType<RotatingCylinderObstacle>())
+            {
+                if (!handled.Contains(o.transform) && GroupKey(o.transform) == key) members.Add(o);
+            }
         }
 
         bool has = false;
@@ -94,8 +102,8 @@ public class RotatingCylinderObstacle : MonoBehaviour
         }
 
         int dot = key.IndexOf('.');
-        pivot = new GameObject("Pivot_Silindir_" + (dot >= 0 ? key.Substring(dot) : "ana")).transform;
-        pivot.position = has ? b.center : transform.position;
+        pivot = new GameObject("Pivot_Silindir_" + (standalonePivot ? name : (dot >= 0 ? key.Substring(dot) : "ana"))).transform;
+        pivot.position = standalonePivot ? transform.position : (has ? b.center : transform.position);
         pivot.rotation = Quaternion.identity;
         pivot.localScale = Vector3.one;
         pivot.gameObject.AddComponent<RotatorPivotMarker>().cylinder = this;
@@ -103,6 +111,11 @@ public class RotatingCylinderObstacle : MonoBehaviour
         foreach (var m in members)
         {
             handled.Add(m.transform);
+            // Yan çarpışma algılamasının (ClosestPoint) çalışması için silindir parçalarını convex yap
+            foreach (var mc in m.GetComponentsInChildren<MeshCollider>(true))
+            {
+                mc.convex = true;
+            }
             m.transform.SetParent(pivot, true);
             if (m != this) m.leader = this;
         }
@@ -124,6 +137,15 @@ public class RotatingCylinderObstacle : MonoBehaviour
         Vector3 d = rotated - r;
         d.y = 0f;
         return d;
+    }
+
+    /// <summary>Verilen dünya noktasındaki dönme teğet hızı (m/sn).</summary>
+    public Vector3 GetPointVelocity(Vector3 worldPoint)
+    {
+        var l = Leader;
+        if (l.pivot == null) return Vector3.zero;
+        Vector3 omega = CurrentWorldAxis * (l.rotationSpeed * Mathf.Deg2Rad);
+        return Vector3.Cross(omega, worldPoint - l.pivot.position);
     }
 }
 
