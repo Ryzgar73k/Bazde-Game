@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -148,6 +149,8 @@ public class PlayerController : MonoBehaviour
     public Vector3 MantleLeftHandPos => mantleLeftHandPos;
     public Vector3 MantleRightHandPos => mantleRightHandPos;
     public Vector3 MantleWallNormal => mantleWallNormal;
+    public float SpawnGraceRemaining => spawnGraceTimer;
+    public bool IsSpawnInvulnerable => spawnGraceTimer > 0f;
 
     public void ApplyConfigMigration()
     {
@@ -257,6 +260,12 @@ public class PlayerController : MonoBehaviour
     Vector3 spawnPos;
     Quaternion spawnRot;
     float knockbackTimer;
+    float spawnGraceTimer;
+    Transform visualRoot;
+    Vector3 visualBaseScale = Vector3.one;
+    Quaternion visualBaseLocalRot = Quaternion.identity;
+    Renderer[] cachedRenderers;
+    Coroutine visualAnimRoutine;
 
     /// <summary>
     /// Yatay/dikey hızları, zıplama ve platform/engel takip durumlarını sıfırlar.
@@ -303,6 +312,18 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void Teleport(Vector3 newPosition, Quaternion? newRotation = null, bool alignCameraToRotation = true)
     {
+        if (visualAnimRoutine != null)
+        {
+            StopCoroutine(visualAnimRoutine);
+            visualAnimRoutine = null;
+        }
+        if (visualRoot != null)
+        {
+            visualRoot.localScale = visualBaseScale;
+            visualRoot.localRotation = visualBaseLocalRot;
+        }
+        SetVisualVisible(true);
+
         if (cc == null) cc = GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
 
@@ -317,6 +338,102 @@ public class PlayerController : MonoBehaviour
         var camFollow = cameraTransform != null ? cameraTransform.GetComponent<ThirdPersonCamera>() : null;
         if (camFollow != null)
             camFollow.ResetView(alignCameraToRotation && newRotation.HasValue ? newRotation.Value.eulerAngles.y : (float?)null);
+    }
+
+    public void SetVisualVisible(bool visible)
+    {
+        if (cachedRenderers == null || cachedRenderers.Length == 0)
+            cachedRenderers = GetComponentsInChildren<Renderer>(true);
+
+        for (int i = 0; i < cachedRenderers.Length; i++)
+        {
+            if (cachedRenderers[i] != null)
+                cachedRenderers[i].enabled = visible;
+        }
+
+        if (visible && visualAnimRoutine == null && visualRoot != null)
+        {
+            visualRoot.localScale = visualBaseScale;
+            visualRoot.localRotation = visualBaseLocalRot;
+        }
+    }
+
+    public void StartSpawnGrace(float duration = 0.6f)
+    {
+        spawnGraceTimer = Mathf.Max(spawnGraceTimer, duration);
+    }
+
+    public void PlayDeathTumble(Vector3 awayDir, float duration = 0.28f)
+    {
+        if (visualRoot == null) return;
+        if (visualAnimRoutine != null) StopCoroutine(visualAnimRoutine);
+        visualAnimRoutine = StartCoroutine(DeathTumbleRoutine(awayDir, duration));
+    }
+
+    public void PlayRespawnPop(float duration = 0.20f, float controlLock = 0.14f)
+    {
+        knockbackTimer = Mathf.Max(knockbackTimer, controlLock);
+        if (visualRoot == null) return;
+        if (visualAnimRoutine != null) StopCoroutine(visualAnimRoutine);
+        visualAnimRoutine = StartCoroutine(RespawnPopRoutine(duration));
+    }
+
+    IEnumerator DeathTumbleRoutine(Vector3 awayDir, float duration)
+    {
+        Vector3 localDir = awayDir.sqrMagnitude > 0.001f
+            ? transform.InverseTransformDirection(awayDir.normalized)
+            : Vector3.back;
+        Vector3 localTiltAxis = Vector3.Cross(Vector3.up, localDir);
+        if (localTiltAxis.sqrMagnitude < 0.001f) localTiltAxis = Vector3.right;
+        localTiltAxis.Normalize();
+
+        Quaternion endRot = visualBaseLocalRot * Quaternion.AngleAxis(78f, localTiltAxis);
+        Vector3 squashScale = new Vector3(visualBaseScale.x * 1.12f, visualBaseScale.y * 0.85f, visualBaseScale.z * 1.12f);
+
+        float dur = Mathf.Max(0.05f, duration);
+        float elapsed = 0f;
+        while (elapsed < dur)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / dur);
+            float easeOut = 1f - Mathf.Pow(1f - t, 2.2f);
+            visualRoot.localRotation = Quaternion.Slerp(visualBaseLocalRot, endRot, easeOut);
+            visualRoot.localScale = Vector3.Lerp(visualBaseScale, squashScale, easeOut);
+            yield return null;
+        }
+
+        visualRoot.localRotation = endRot;
+        visualAnimRoutine = null;
+    }
+
+    IEnumerator RespawnPopRoutine(float duration)
+    {
+        Vector3 startScale = new Vector3(
+            visualBaseScale.x * 1.34f,
+            visualBaseScale.y * 0.66f,
+            visualBaseScale.z * 1.34f);
+
+        visualRoot.localRotation = visualBaseLocalRot;
+        visualRoot.localScale = startScale;
+
+        float dur = Mathf.Max(0.05f, duration);
+        float elapsed = 0f;
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+
+        while (elapsed < dur)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / dur);
+            float u = t - 1f;
+            float easeOutBack = 1f + c3 * u * u * u + c1 * u * u;
+            visualRoot.localScale = Vector3.LerpUnclamped(startScale, visualBaseScale, easeOutBack);
+            yield return null;
+        }
+
+        visualRoot.localScale = visualBaseScale;
+        visualRoot.localRotation = visualBaseLocalRot;
+        visualAnimRoutine = null;
     }
 
     /// <summary>
@@ -370,6 +487,14 @@ public class PlayerController : MonoBehaviour
             AlignVisualModelToCapsule();
             EnsureAnimatorParamsCached();
         }
+
+        visualRoot = animator != null ? animator.transform : (transform.childCount > 0 ? transform.GetChild(0) : null);
+        if (visualRoot != null)
+        {
+            visualBaseScale = visualRoot.localScale;
+            visualBaseLocalRot = visualRoot.localRotation;
+        }
+        cachedRenderers = GetComponentsInChildren<Renderer>(true);
     }
 
     void OnValidate()
@@ -391,6 +516,8 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         float dt = Time.deltaTime;
+        if (spawnGraceTimer > 0f) spawnGraceTimer = Mathf.Max(0f, spawnGraceTimer - dt);
+        if (RespawnManager.Instance != null && RespawnManager.Instance.IsRespawning) return;
         if (RespawnManager.Instance == null && GetWorldFootPosition().y < killY) { Respawn(); return; }
         if (knockbackTimer > 0f) knockbackTimer -= dt;
         // Dönen çark/silindirler -20 sırasında döndürüldüğü için PhysX çarpışma/ışın sorgularını kare başında senkronize et

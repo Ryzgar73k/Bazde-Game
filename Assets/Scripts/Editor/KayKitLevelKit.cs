@@ -105,6 +105,11 @@ public static class KayKitLevelKit
             return false;
         }
 
+        KurdistanEnvironmentBuilder.BuildEnvironmentForScene(
+            ctx.Scene,
+            KurdistanEnvironmentBuilder.InferLevelNumber(ctx.ScenePath, ctx.Scene.name));
+        EditorSceneManager.SaveScene(ctx.Scene);
+
         RegisterAllStandardBuildScenes();
         AssetDatabase.SaveAssets();
         return true;
@@ -203,6 +208,7 @@ public static class KayKitLevelKit
         var camGO = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
         camGO.tag = "MainCamera";
         camGO.transform.SetParent(parent, false);
+        camGO.GetComponent<Camera>().farClipPlane = 650f;
         Vector3 backOffset = spawnPoint.rotation * new Vector3(0f, 2.0f, -3.4f);
         camGO.transform.position = spawnPoint.position + backOffset;
         camGO.transform.rotation = Quaternion.Euler(18f, spawnPoint.eulerAngles.y, 0f);

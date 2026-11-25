@@ -99,11 +99,12 @@ public class TimedSpikeTrap : MonoBehaviour
         if (Time.time - lastRespawnTime < 0.35f) return;
 
         var player = other.GetComponentInParent<PlayerController>();
-        if (player == null) return;
+        if (player == null || player.IsSpawnInvulnerable) return;
+        if (RespawnManager.Instance != null && RespawnManager.Instance.IsRespawning) return;
 
         lastRespawnTime = Time.time;
         if (RespawnManager.Instance != null)
-            RespawnManager.Instance.RespawnPlayer(player);
+            RespawnManager.Instance.RespawnPlayer(player, DeathCause.SpikeTrap, transform.position);
         else
             player.Teleport(Vector3.zero);
     }
