@@ -37,6 +37,15 @@ public class ThirdPersonCamera : MonoBehaviour
     public float collisionSnapSpeed = 30f;
     public float collisionRecoverSpeed = 12f;
 
+    [Header("Kamera Sarsıntısı (Trauma)")]
+    public float traumaDecay = 1.6f;
+    public Vector3 maxShakeOffset = new Vector3(0.32f, 0.24f, 0.14f);
+    public float maxShakeRoll = 5.5f;
+
+    [Header("Düşüş İzleme (Fall-Watch)")]
+    public bool enableFallWatch = true;
+    public float fallWatchMarginAboveThreshold = 4.0f;
+
     float yaw;
     float pitch = 20f;
     float targetYaw;
@@ -46,6 +55,12 @@ public class ThirdPersonCamera : MonoBehaviour
     bool hasInitialPose;
     Vector3 smoothedTarget;
     float currentDistance;
+    float trauma;
+    float shakeClock;
+    bool isDeathWatchLocked;
+    Vector3 lockedCameraPos;
+    Transform deathLookTarget;
+    Vector3 deathLookFallbackPoint;
     readonly RaycastHit[] hitBuffer = new RaycastHit[16];
     readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>(8);
 
@@ -82,9 +97,31 @@ public class ThirdPersonCamera : MonoBehaviour
         }
     }
 
+    public void AddTrauma(float amount)
+    {
+        trauma = Mathf.Clamp01(trauma + amount);
+    }
+
+    public void LockDeathWatch(Transform lookTarget, Vector3 fallbackPoint)
+    {
+        lockedCameraPos = transform.position;
+        isDeathWatchLocked = true;
+        deathLookTarget = lookTarget;
+        deathLookFallbackPoint = fallbackPoint;
+    }
+
+    public void UnlockDeathWatch()
+    {
+        isDeathWatchLocked = false;
+        deathLookTarget = null;
+    }
+
     /// <summary>Yeniden doğma sonrası kamerayı oyun başındaki veya belirtilen bakış yönüne döndürür.</summary>
     public void ResetView(float? overrideYaw = null)
     {
+        UnlockDeathWatch();
+        trauma = 0f;
+
         if (!hasInitialPose)
         {
             initialYaw = transform.eulerAngles.y;
@@ -159,6 +196,44 @@ public class ThirdPersonCamera : MonoBehaviour
             return;
         }
 
+        float unscaledDt = Time.unscaledDeltaTime;
+        if (trauma > 0f)
+        {
+            trauma = Mathf.Max(0f, trauma - traumaDecay * unscaledDt);
+            shakeClock += unscaledDt * 30f;
+        }
+
+        float shakeStrength = trauma * trauma * GameFeelSettings.ShakeStrength;
+        Vector3 shakeOffset = shakeStrength > 0.0001f
+            ? new Vector3(
+                maxShakeOffset.x * shakeStrength * Mathf.Sin(shakeClock * 1.7f),
+                maxShakeOffset.y * shakeStrength * Mathf.Sin(shakeClock * 2.3f),
+                maxShakeOffset.z * shakeStrength * Mathf.Sin(shakeClock * 1.4f))
+            : Vector3.zero;
+        float shakeRoll = shakeStrength > 0.0001f
+            ? maxShakeRoll * shakeStrength * Mathf.Sin(shakeClock * 1.1f)
+            : 0f;
+
+        if (isDeathWatchLocked)
+        {
+            // Tüketilmemiş bakış girdisini temizle ki yeniden doğuşta kamera sıçramasın
+            PlayerInputState.ConsumeLook();
+
+            Vector3 lookTarget = deathLookTarget != null
+                ? deathLookTarget.position + Vector3.up * 0.4f
+                : deathLookFallbackPoint;
+            Vector3 toTarget = lookTarget - lockedCameraPos;
+            Quaternion desiredRot = toTarget.sqrMagnitude > 0.001f
+                ? Quaternion.LookRotation(toTarget.normalized, Vector3.up)
+                : transform.rotation;
+
+            float rotFactor = 1f - Mathf.Exp(-8f * unscaledDt);
+            Quaternion baseRot = Quaternion.Slerp(transform.rotation, desiredRot, rotFactor);
+            Quaternion finalRot = baseRot * Quaternion.Euler(0f, 0f, shakeRoll);
+            transform.SetPositionAndRotation(lockedCameraPos + baseRot * shakeOffset, finalRot);
+            return;
+        }
+
         if (target == null) return;
 
         float dt = Time.deltaTime;
@@ -171,9 +246,20 @@ public class ThirdPersonCamera : MonoBehaviour
         pitch = Mathf.Lerp(pitch, targetPitch, lookFactor);
 
         Vector3 rawTarget = target.position;
-        if (lockInstant || (rawTarget - smoothedTarget).sqrMagnitude > 16f)
+        bool isFallWatching = false;
+        float minWatchY = float.NegativeInfinity;
+        if (enableFallWatch && RespawnManager.Instance != null && RespawnManager.Instance.autoCheckFall)
+        {
+            minWatchY = RespawnManager.Instance.fallThresholdY + fallWatchMarginAboveThreshold;
+            if (rawTarget.y < minWatchY)
+                isFallWatching = true;
+        }
+
+        if (lockInstant || (!isFallWatching && (rawTarget - smoothedTarget).sqrMagnitude > 16f))
         {
             smoothedTarget = rawTarget;
+            if (isFallWatching)
+                smoothedTarget.y = Mathf.Max(smoothedTarget.y, minWatchY);
         }
         else
         {
@@ -182,16 +268,20 @@ public class ThirdPersonCamera : MonoBehaviour
             float newX = Mathf.Lerp(smoothedTarget.x, rawTarget.x, horizFactor);
             float newZ = Mathf.Lerp(smoothedTarget.z, rawTarget.z, horizFactor);
 
+            float targetY = isFallWatching ? Mathf.Max(rawTarget.y, minWatchY) : rawTarget.y;
+
             // Küçük engel yükseklik dalgalanmalarını yavaşça sönümle, büyük sıçrama/düşüşlerde hızla yetiş
-            float dy = Mathf.Abs(rawTarget.y - smoothedTarget.y);
+            float dy = Mathf.Abs(targetY - smoothedTarget.y);
             float vertSpeed = Mathf.Lerp(verticalFollowSpeed, Mathf.Max(verticalFollowSpeed, 22f), Mathf.InverseLerp(0.35f, 1.2f, dy));
             float vertFactor = 1f - Mathf.Exp(-Mathf.Max(1f, vertSpeed) * dt);
-            float newY = Mathf.Lerp(smoothedTarget.y, rawTarget.y, vertFactor);
+            float newY = Mathf.Lerp(smoothedTarget.y, targetY, vertFactor);
 
-            if (maxVerticalLag > 0.05f && Mathf.Abs(rawTarget.y - newY) > maxVerticalLag)
+            if (!isFallWatching && maxVerticalLag > 0.05f && Mathf.Abs(targetY - newY) > maxVerticalLag)
             {
-                newY = rawTarget.y - Mathf.Sign(rawTarget.y - newY) * maxVerticalLag;
+                newY = targetY - Mathf.Sign(targetY - newY) * maxVerticalLag;
             }
+            if (isFallWatching)
+                newY = Mathf.Max(newY, minWatchY);
 
             smoothedTarget = new Vector3(newX, newY, newZ);
         }
@@ -205,7 +295,19 @@ public class ThirdPersonCamera : MonoBehaviour
         float distFactor = 1f - Mathf.Exp(-blendSpeed * dt);
         currentDistance = Mathf.Lerp(currentDistance, targetDist, distFactor);
 
-        transform.SetPositionAndRotation(pivot + castDir * currentDistance, rot);
+        Vector3 camPos = pivot + castDir * currentDistance;
+        if (isFallWatching)
+        {
+            Vector3 toFaller = (rawTarget + Vector3.up * 0.4f) - camPos;
+            if (toFaller.sqrMagnitude > 0.01f)
+            {
+                Quaternion lookDownRot = Quaternion.LookRotation(toFaller.normalized, Vector3.up);
+                float tiltBlend = Mathf.Clamp01((minWatchY - rawTarget.y) / Mathf.Max(1f, fallWatchMarginAboveThreshold));
+                rot = Quaternion.Slerp(rot, lookDownRot, tiltBlend * 0.72f);
+            }
+        }
+
+        transform.SetPositionAndRotation(camPos + rot * shakeOffset, rot * Quaternion.Euler(0f, 0f, shakeRoll));
     }
 
     float ResolveCameraCollision(Vector3 pivot, Vector3 castDir, float maxDist)

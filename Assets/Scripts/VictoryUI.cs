@@ -100,13 +100,16 @@ public class VictoryUI : MonoBehaviour
         if (subtitleText != null)
         {
             var hud = LevelHUD.Instance;
+            int deaths = RespawnManager.Instance != null ? RespawnManager.Instance.DeathCount : (hud != null ? hud.DeathCount : 0);
+            string deathSummary = deaths == 0 ? "Hatasız!" : $"Düşüş: {deaths}";
+
             if (hud != null && (hud.TotalStars > 0 || hud.TotalDiamonds > 0))
             {
-                subtitleText.text = $"SEVİYE TAMAMLANDI  •  ★ {hud.CollectedStars}/{hud.TotalStars}   ◆ {hud.CollectedDiamonds}/{hud.TotalDiamonds}";
+                subtitleText.text = $"SEVİYE TAMAMLANDI  •  ★ {hud.CollectedStars}/{hud.TotalStars}   ◆ {hud.CollectedDiamonds}/{hud.TotalDiamonds}  •  {deathSummary}";
             }
             else
             {
-                subtitleText.text = "SEVİYE BAŞARIYLA TAMAMLANDI";
+                subtitleText.text = $"SEVİYE BAŞARIYLA TAMAMLANDI  •  {deathSummary}";
             }
         }
 

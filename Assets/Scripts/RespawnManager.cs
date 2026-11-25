@@ -41,13 +41,18 @@ public class RespawnManager : MonoBehaviour
     private Checkpoint currentCheckpoint;
 
     public Checkpoint CurrentCheckpoint => currentCheckpoint;
+    public bool IsRespawning => isRespawning;
+    public int DeathCount { get; private set; }
 
     public event System.Action<Checkpoint> OnCheckpointChanged;
+    public event System.Action<PlayerController, DeathCause, Vector3> OnPlayerDied;
     public event System.Action<PlayerController> OnPlayerRespawned;
 
     private Vector3 initialSpawnPosition;
     private Quaternion initialSpawnRotation;
     private bool isRespawning;
+    private bool hasPlayedFallWhoosh;
+    private DeathFeedbackController feedbackController;
 
     void Awake()
     {
@@ -57,6 +62,10 @@ public class RespawnManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        feedbackController = GetComponent<DeathFeedbackController>();
+        if (feedbackController == null)
+            feedbackController = gameObject.AddComponent<DeathFeedbackController>();
 
         if (player == null)
             player = Object.FindAnyObjectByType<PlayerController>();
@@ -89,7 +98,7 @@ public class RespawnManager : MonoBehaviour
 
     void Update()
     {
-        if (!autoCheckFall || isRespawning) return;
+        if (!autoCheckFall || isRespawning || VictoryUI.IsAnyVictoryVisible) return;
 
         if (player == null)
         {
@@ -97,9 +106,20 @@ public class RespawnManager : MonoBehaviour
             if (player == null) return;
         }
 
+        if (player.IsGrounded)
+        {
+            hasPlayedFallWhoosh = false;
+        }
+        else if (!hasPlayedFallWhoosh && player.VerticalVelocity < -8.0f && player.GetWorldFootPosition().y < fallThresholdY + 6.5f)
+        {
+            hasPlayedFallWhoosh = true;
+            if (feedbackController != null)
+                feedbackController.NotifyFallingTowardAbyss();
+        }
+
         if (player.GetWorldFootPosition().y < fallThresholdY)
         {
-            RespawnPlayer(player);
+            RespawnPlayer(player, DeathCause.Fall);
         }
     }
 
@@ -113,27 +133,83 @@ public class RespawnManager : MonoBehaviour
 
     public void RespawnPlayer(PlayerController target = null)
     {
-        if (isRespawning) return;
+        RespawnPlayer(target, DeathCause.Fall);
+    }
+
+    public void RespawnPlayer(
+        PlayerController target,
+        DeathCause cause,
+        Vector3? impactOrigin = null,
+        AudioClip overrideDeathSound = null,
+        GameObject overrideDeathVFX = null)
+    {
+        if (isRespawning || VictoryUI.IsAnyVictoryVisible) return;
 
         if (target == null) target = player;
         if (target == null) target = Object.FindAnyObjectByType<PlayerController>();
         if (target == null) return;
 
-        if (respawnDelay > 0f && gameObject.activeInHierarchy)
+        if (cause != DeathCause.Fall && target.IsSpawnInvulnerable)
+            return;
+
+        DeathCount++;
+        Vector3 deathPos = target.transform.position;
+        isRespawning = true;
+        target.canControl = false;
+        OnPlayerDied?.Invoke(target, cause, deathPos);
+
+        if (feedbackController == null)
+            feedbackController = GetComponent<DeathFeedbackController>();
+
+        if (feedbackController != null && gameObject.activeInHierarchy)
+        {
+            StartCoroutine(DeathAndRespawnRoutine(target, cause, deathPos, impactOrigin ?? deathPos, overrideDeathSound, overrideDeathVFX));
+        }
+        else if (respawnDelay > 0f && gameObject.activeInHierarchy)
         {
             StartCoroutine(RespawnRoutine(target));
         }
         else
         {
             ExecuteRespawn(target);
+            target.canControl = !VictoryUI.IsAnyVictoryVisible;
+            hasPlayedFallWhoosh = false;
+            isRespawning = false;
         }
+    }
+
+    private IEnumerator DeathAndRespawnRoutine(
+        PlayerController target,
+        DeathCause cause,
+        Vector3 deathPos,
+        Vector3 impactOrigin,
+        AudioClip overrideDeathSound,
+        GameObject overrideDeathVFX)
+    {
+        yield return feedbackController.PlayDeathAndRespawnSequence(
+            target,
+            cause,
+            deathPos,
+            impactOrigin,
+            fallThresholdY,
+            overrideDeathSound,
+            overrideDeathVFX,
+            () => ExecuteRespawn(target));
+
+        if (target != null)
+            target.canControl = !VictoryUI.IsAnyVictoryVisible;
+        hasPlayedFallWhoosh = false;
+        isRespawning = false;
     }
 
     private IEnumerator RespawnRoutine(PlayerController target)
     {
         isRespawning = true;
-        yield return new WaitForSeconds(respawnDelay);
+        yield return new WaitForSecondsRealtime(respawnDelay);
         ExecuteRespawn(target);
+        if (target != null)
+            target.canControl = !VictoryUI.IsAnyVictoryVisible;
+        hasPlayedFallWhoosh = false;
         isRespawning = false;
     }
 

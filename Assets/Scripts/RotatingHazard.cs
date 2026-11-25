@@ -68,17 +68,20 @@ public class RotatingHazard : MonoBehaviour
 
         var player = other.GetComponentInParent<PlayerController>();
         if (player == null) return;
-
-        nextHitTime = Time.time + hitCooldown;
+        if (RespawnManager.Instance != null && RespawnManager.Instance.IsRespawning) return;
 
         if (hitBehavior == HitBehavior.InstantRespawn)
         {
+            if (player.IsSpawnInvulnerable) return;
+            nextHitTime = Time.time + hitCooldown;
             if (RespawnManager.Instance != null)
-                RespawnManager.Instance.RespawnPlayer(player);
+                RespawnManager.Instance.RespawnPlayer(player, DeathCause.Hazard, transform.position);
             else
                 player.Teleport(Vector3.zero);
             return;
         }
+
+        nextHitTime = Time.time + hitCooldown;
 
         // Knockback: oyuncuyu yatayda tuzaktan uzağa ve hafif yukarı fırlat
         Vector3 toPlayer = player.transform.position - transform.position;
@@ -98,5 +101,7 @@ public class RotatingHazard : MonoBehaviour
         }
 
         player.ApplyKnockback(pushDir * knockbackSpeed + Vector3.up * knockbackUpSpeed, 0.28f);
+        if (DeathFeedbackController.Instance != null)
+            DeathFeedbackController.Instance.PlayNonLethalHitFeedback(player.transform.position + Vector3.up * 0.6f);
     }
 }

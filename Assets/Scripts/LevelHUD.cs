@@ -16,6 +16,10 @@ public class LevelHUD : MonoBehaviour
     public int TotalStars { get; private set; }
     public int CollectedDiamonds { get; private set; }
     public int TotalDiamonds { get; private set; }
+    public int DeathCount { get; private set; }
+
+    private static readonly Color DefaultToastColor = new Color(0.35f, 1f, 0.55f);
+    private static readonly Color DeathToastColor = new Color(1f, 0.42f, 0.42f);
 
     private int totalCheckpoints;
     private int activeCheckpointIndex;
@@ -51,7 +55,11 @@ public class LevelHUD : MonoBehaviour
         totalCheckpoints = FindObjectsByType<Checkpoint>().Length;
 
         if (RespawnManager.Instance != null)
+        {
             RespawnManager.Instance.OnCheckpointChanged += HandleCheckpointChanged;
+            RespawnManager.Instance.OnPlayerDied += HandlePlayerDied;
+            DeathCount = RespawnManager.Instance.DeathCount;
+        }
 
         if (string.IsNullOrEmpty(levelLabel))
             levelLabel = SceneManager.GetActiveScene().name.ToUpperInvariant();
@@ -63,7 +71,10 @@ public class LevelHUD : MonoBehaviour
     void OnDestroy()
     {
         if (RespawnManager.Instance != null)
+        {
             RespawnManager.Instance.OnCheckpointChanged -= HandleCheckpointChanged;
+            RespawnManager.Instance.OnPlayerDied -= HandlePlayerDied;
+        }
         if (Instance == this) Instance = null;
     }
 
@@ -107,9 +118,21 @@ public class LevelHUD : MonoBehaviour
         ShowToast($"CHECKPOINT {cp.checkpointIndex} ALINDI!");
     }
 
-    public void ShowToast(string message, float duration = 2.0f)
+    private void HandlePlayerDied(PlayerController _, DeathCause cause, Vector3 __)
+    {
+        DeathCount = RespawnManager.Instance != null ? RespawnManager.Instance.DeathCount : DeathCount + 1;
+        RefreshText();
+
+        string msg = cause == DeathCause.SpikeTrap ? "DİKEN TUZAĞI!"
+                   : cause == DeathCause.Hazard ? "TEHLİKE!"
+                   : "DÜŞTÜN!";
+        ShowToast(msg, 1.15f, DeathToastColor);
+    }
+
+    public void ShowToast(string message, float duration = 2.0f, Color? textColor = null)
     {
         if (toastText == null || toastGroup == null) return;
+        toastText.color = textColor ?? DefaultToastColor;
         toastText.text = message;
         if (toastRoutine != null) StopCoroutine(toastRoutine);
         toastRoutine = StartCoroutine(ToastRoutine(duration));
@@ -118,12 +141,12 @@ public class LevelHUD : MonoBehaviour
     private IEnumerator ToastRoutine(float duration)
     {
         toastGroup.alpha = 1f;
-        yield return new WaitForSeconds(Mathf.Max(0.4f, duration - 0.35f));
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.25f, duration - 0.30f));
         float t = 0f;
-        while (t < 0.35f)
+        while (t < 0.30f)
         {
-            t += Time.deltaTime;
-            toastGroup.alpha = 1f - Mathf.Clamp01(t / 0.35f);
+            t += Time.unscaledDeltaTime;
+            toastGroup.alpha = 1f - Mathf.Clamp01(t / 0.30f);
             yield return null;
         }
         toastGroup.alpha = 0f;
@@ -132,7 +155,7 @@ public class LevelHUD : MonoBehaviour
     private void RefreshText()
     {
         if (checkpointText != null)
-            checkpointText.text = $"CP {activeCheckpointIndex}/{totalCheckpoints}";
+            checkpointText.text = $"CP {activeCheckpointIndex}/{totalCheckpoints}  •  ✕ {DeathCount}";
 
         if (collectibleText != null)
             collectibleText.text = $"★ {CollectedStars}/{TotalStars}   ◆ {CollectedDiamonds}/{TotalDiamonds}";
@@ -153,7 +176,7 @@ public class LevelHUD : MonoBehaviour
         scaler.matchWidthOrHeight = 0.5f;
 
         // Sol üst kompakt bilgi paneli (MobileControls ile çakışmaz)
-        var panel = CreateRect("HudPanel", canvasGO.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(460, 104), new Vector2(250, -72));
+        var panel = CreateRect("HudPanel", canvasGO.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(490, 104), new Vector2(265, -72));
         var bg = panel.gameObject.AddComponent<Image>();
         bg.color = new Color(0.08f, 0.11f, 0.18f, 0.72f);
         bg.raycastTarget = false;
@@ -164,11 +187,11 @@ public class LevelHUD : MonoBehaviour
         var timeRT = CreateRect("Timer", panel, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(190, 36), new Vector2(-112, -26));
         timerText = CreateText(timeRT.gameObject, "00:00.0", 26, Color.white, TextAnchor.MiddleRight);
 
-        var cpRT = CreateRect("Checkpoint", panel, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(160, 36), new Vector2(98, 28));
-        checkpointText = CreateText(cpRT.gameObject, "CP 0/0", 22, new Color(0.35f, 0.95f, 0.55f), TextAnchor.MiddleLeft);
+        var cpRT = CreateRect("Checkpoint", panel, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(215, 36), new Vector2(124, 28));
+        checkpointText = CreateText(cpRT.gameObject, "CP 0/0  •  ✕ 0", 21, new Color(0.35f, 0.95f, 0.55f), TextAnchor.MiddleLeft);
 
-        var colRT = CreateRect("Collectibles", panel, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(260, 36), new Vector2(-148, 28));
-        collectibleText = CreateText(colRT.gameObject, "★ 0/0   ◆ 0/0", 22, new Color(0.65f, 0.88f, 1f), TextAnchor.MiddleRight);
+        var colRT = CreateRect("Collectibles", panel, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(230, 36), new Vector2(-131, 28));
+        collectibleText = CreateText(colRT.gameObject, "★ 0/0   ◆ 0/0", 21, new Color(0.65f, 0.88f, 1f), TextAnchor.MiddleRight);
 
         // Üst orta bildirim banner'ı
         var toastRT = CreateRect("Toast", canvasGO.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(560, 56), new Vector2(0, -64));

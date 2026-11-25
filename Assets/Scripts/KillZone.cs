@@ -31,16 +31,28 @@ public class KillZone : MonoBehaviour
 
         if (player != null)
         {
-            if (deathSound != null)
-                AudioSource.PlayClipAtPoint(deathSound, other.transform.position);
-
-            if (deathVFX != null)
-                Instantiate(deathVFX, other.transform.position, Quaternion.identity);
-
             if (RespawnManager.Instance != null)
-                RespawnManager.Instance.RespawnPlayer(player);
+            {
+                if (RespawnManager.Instance.IsRespawning || player.IsSpawnInvulnerable)
+                    return;
+
+                RespawnManager.Instance.RespawnPlayer(
+                    player,
+                    DeathCause.KillZone,
+                    transform.position,
+                    deathSound,
+                    deathVFX);
+            }
             else
+            {
+                if (deathSound != null)
+                    AudioSource.PlayClipAtPoint(deathSound, other.transform.position);
+
+                if (deathVFX != null)
+                    Instantiate(deathVFX, other.transform.position, Quaternion.identity);
+
                 player.Teleport(Vector3.zero);
+            }
         }
     }
 
