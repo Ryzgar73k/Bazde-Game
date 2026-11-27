@@ -189,7 +189,7 @@ public static class KurdistanEnvironmentBuilder
                 return new BiomeProfile
                 {
                     LevelNumber = 2,
-                    Name = "Kanyon ve Nehir Vadisi",
+                    Name = "Kanyon ve Dalgalı Deniz (Öğle)",
                     SunEuler = new Vector3(56f, 28f, 0f),
                     SunColor = new Color(1.0f, 0.97f, 0.92f),
                     SunIntensity = 1.42f,
@@ -197,9 +197,9 @@ public static class KurdistanEnvironmentBuilder
                     FogDensity = 0.0024f,
                     AmbientIntensity = 1.15f,
                     DefaultFallY = -12f,
-                    SurfaceScrollSpeed = new Vector2(0.0f, -0.055f),
-                    SurfaceBobAmp = 0.05f,
-                    SurfaceBobSpeed = 1.4f,
+                    SurfaceScrollSpeed = Vector2.zero,
+                    SurfaceBobAmp = 0f,
+                    SurfaceBobSpeed = 0f,
                     CloudDrift = new Vector3(2.1f, 0f, 0.7f),
                     TreeCount = 34,
                     RockCount = 26,
@@ -215,7 +215,7 @@ public static class KurdistanEnvironmentBuilder
                 return new BiomeProfile
                 {
                     LevelNumber = 3,
-                    Name = "Yüksek Dağ Geçidi (Gün Batımı)",
+                    Name = "Yüksek Dağ Geçidi ve Gün Batımı Denizi",
                     SunEuler = new Vector3(20f, -128f, 0f),
                     SunColor = new Color(1.0f, 0.76f, 0.48f),
                     SunIntensity = 1.38f,
@@ -223,15 +223,15 @@ public static class KurdistanEnvironmentBuilder
                     FogDensity = 0.0031f,
                     AmbientIntensity = 1.05f,
                     DefaultFallY = -14f,
-                    SurfaceScrollSpeed = new Vector2(0.015f, 0.010f),
-                    SurfaceBobAmp = 0.14f,
-                    SurfaceBobSpeed = 0.65f,
+                    SurfaceScrollSpeed = Vector2.zero,
+                    SurfaceBobAmp = 0f,
+                    SurfaceBobSpeed = 0f,
                     CloudDrift = new Vector3(1.5f, 0f, -0.6f),
                     TreeCount = 40,
                     RockCount = 24,
                     CloudCount = 14,
                     EagleCount = 4,
-                    AddDeepValleyUnderSurface = true,
+                    AddDeepValleyUnderSurface = false,
                     AddCloudSeaClusters = false,
                     DrapedFlagAngleDeg = 92f,
                     PaintedFlagAngleDeg = 48f
@@ -241,7 +241,7 @@ public static class KurdistanEnvironmentBuilder
                 return new BiomeProfile
                 {
                     LevelNumber = 4,
-                    Name = "Karlı Zirveler (Bulutların Üstü)",
+                    Name = "Karlı Zirveler ve Dalgalı Okyanus",
                     SunEuler = new Vector3(44f, 42f, 0f),
                     SunColor = new Color(0.95f, 0.97f, 1.0f),
                     SunIntensity = 1.36f,
@@ -249,16 +249,16 @@ public static class KurdistanEnvironmentBuilder
                     FogDensity = 0.0023f,
                     AmbientIntensity = 1.22f,
                     DefaultFallY = -14f,
-                    SurfaceScrollSpeed = new Vector2(0.008f, 0.006f),
-                    SurfaceBobAmp = 0.12f,
-                    SurfaceBobSpeed = 0.55f,
+                    SurfaceScrollSpeed = Vector2.zero,
+                    SurfaceBobAmp = 0f,
+                    SurfaceBobSpeed = 0f,
                     CloudDrift = new Vector3(2.4f, 0f, 0.8f),
                     TreeCount = 22,
                     RockCount = 24,
                     CloudCount = 16,
                     EagleCount = 4,
                     AddDeepValleyUnderSurface = false,
-                    AddCloudSeaClusters = true,
+                    AddCloudSeaClusters = false,
                     DrapedFlagAngleDeg = 86f,
                     PaintedFlagAngleDeg = 142f
                 };
@@ -267,7 +267,7 @@ public static class KurdistanEnvironmentBuilder
                 return new BiomeProfile
                 {
                     LevelNumber = 1,
-                    Name = "Bahar Yaylası (Sabah)",
+                    Name = "Bahar Yaylası ve Turkuaz Deniz (Sabah)",
                     SunEuler = new Vector3(38f, -32f, 0f),
                     SunColor = new Color(1.0f, 0.95f, 0.86f),
                     SunIntensity = 1.34f,
@@ -275,9 +275,9 @@ public static class KurdistanEnvironmentBuilder
                     FogDensity = 0.0021f,
                     AmbientIntensity = 1.18f,
                     DefaultFallY = -12f,
-                    SurfaceScrollSpeed = new Vector2(0.012f, 0.018f),
-                    SurfaceBobAmp = 0.06f,
-                    SurfaceBobSpeed = 0.95f,
+                    SurfaceScrollSpeed = Vector2.zero,
+                    SurfaceBobAmp = 0f,
+                    SurfaceBobSpeed = 0f,
                     CloudDrift = new Vector3(1.6f, 0f, 0.45f),
                     TreeCount = 46,
                     RockCount = 20,
@@ -443,64 +443,39 @@ public static class KurdistanEnvironmentBuilder
         var surfaceGroup = new GameObject("ValleyFloorSurface").transform;
         surfaceGroup.SetParent(envRoot, false);
 
-        var plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        plane.name = profile.LevelNumber == 1 ? "MountainLakeSurface"
-                   : profile.LevelNumber == 2 ? "CanyonRiverSurface"
-                   : profile.LevelNumber == 3 ? "SunsetMistSurface"
-                   : "CloudSeaFloor";
-        plane.transform.SetParent(surfaceGroup, false);
-        plane.transform.position = new Vector3(centerXZ.x, fallThresholdY, centerXZ.y);
-        plane.transform.localScale = new Vector3(110f, 1f, 110f); // 1100 x 1100 m
-
-        var col = plane.GetComponent<Collider>();
-        if (col != null) Object.DestroyImmediate(col);
-
-        var mr = plane.GetComponent<MeshRenderer>();
-        mr.sharedMaterial = biome.SurfaceMat;
-        mr.shadowCastingMode = ShadowCastingMode.Off;
-        mr.receiveShadows = false;
-
-        if (profile.AddDeepValleyUnderSurface)
+        GameObject seaGO;
+        if (shared.WavySeaMesh != null)
         {
-            var deep = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            deep.name = "DeepValleyFloor";
-            deep.transform.SetParent(surfaceGroup, false);
-            deep.transform.position = new Vector3(centerXZ.x, fallThresholdY - 14f, centerXZ.y);
-            deep.transform.localScale = new Vector3(110f, 1f, 110f);
-            var dCol = deep.GetComponent<Collider>();
-            if (dCol != null) Object.DestroyImmediate(dCol);
-            var dMr = deep.GetComponent<MeshRenderer>();
-            dMr.sharedMaterial = biome.FoothillMat;
-            dMr.shadowCastingMode = ShadowCastingMode.Off;
-            dMr.receiveShadows = false;
+            seaGO = CreateStaticMeshObject(
+                "WavySeaSurface",
+                surfaceGroup,
+                new Vector3(centerXZ.x, fallThresholdY, centerXZ.y),
+                Quaternion.identity,
+                Vector3.one,
+                shared.WavySeaMesh,
+                useLocalSpace: false,
+                biome.SurfaceMat);
+            var seaMr = seaGO.GetComponent<MeshRenderer>();
+            if (seaMr != null) seaMr.receiveShadows = false;
+        }
+        else
+        {
+            seaGO = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            seaGO.name = "WavySeaSurface";
+            seaGO.transform.SetParent(surfaceGroup, false);
+            seaGO.transform.position = new Vector3(centerXZ.x, fallThresholdY, centerXZ.y);
+            seaGO.transform.localScale = new Vector3(110f, 1f, 110f);
+            var col = seaGO.GetComponent<Collider>();
+            if (col != null) Object.DestroyImmediate(col);
+            var mr = seaGO.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = biome.SurfaceMat;
+            mr.shadowCastingMode = ShadowCastingMode.Off;
+            mr.receiveShadows = false;
         }
 
-        if (profile.AddCloudSeaClusters && shared.CloudMesh != null)
-        {
-            var rng = new System.Random(4400 + profile.LevelNumber);
-            for (int i = 0; i < 24; i++)
-            {
-                float angle = ((float)i / 24f) * Mathf.PI * 2f + (float)rng.NextDouble() * 0.25f;
-                float rad = Mathf.Lerp(25f, 165f, (float)rng.NextDouble());
-                float x = centerXZ.x + Mathf.Cos(angle) * rad;
-                float z = centerXZ.y + Mathf.Sin(angle) * rad;
-                float y = fallThresholdY + Mathf.Lerp(-0.7f, 0.75f, (float)rng.NextDouble());
-                float sx = Mathf.Lerp(5.5f, 12.5f, (float)rng.NextDouble());
-                float sy = Mathf.Lerp(1.1f, 2.2f, (float)rng.NextDouble());
-                float sz = Mathf.Lerp(4.5f, 10.5f, (float)rng.NextDouble());
-
-                CreateStaticMeshObject(
-                    $"SeaCloud_{i + 1}",
-                    surfaceGroup,
-                    new Vector3(x, y, z),
-                    Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f),
-                    new Vector3(sx, sy, sz),
-                    shared.CloudMesh,
-                    shared.CloudMat);
-            }
-        }
-
-        return mr;
+        // Dalga hareketini doğrudan GPU shader yönettiği için runtime materyal kopyalamasına gerek yok
+        _ = profile;
+        return null;
     }
 
     static void PopulateNatureAndDistantLandmarks(
@@ -757,10 +732,12 @@ public static class KurdistanEnvironmentBuilder
         finMr.sharedMaterial = shared.AccentGoldMat;
         finMr.shadowCastingMode = ShadowCastingMode.Off;
 
-        // Hafif URP Dalgalanan Kumaş
+        // Hafif URP Dalgalanan Kumaş (varsayılan inik, zafere ulaşınca göndere çekilir)
+        const float raisedClothY = poleHeight - 1.10f;
+        const float loweredClothY = 1.45f;
         var cloth = new GameObject("FlagCloth", typeof(MeshFilter), typeof(MeshRenderer), typeof(WavingFlagMesh));
         cloth.transform.SetParent(flagRoot.transform, false);
-        cloth.transform.localPosition = new Vector3(0.06f, poleHeight - 1.10f, 0f);
+        cloth.transform.localPosition = new Vector3(0.06f, loweredClothY, 0f);
         cloth.transform.localRotation = Quaternion.Euler(0f, 18f, 0f);
 
         var mr = cloth.GetComponent<MeshRenderer>();
@@ -775,6 +752,16 @@ public static class KurdistanEnvironmentBuilder
         wave.waveAmplitude = 0.24f;
         wave.waveFrequency = 2.4f;
         wave.waveSpeed = 3.2f;
+
+        var hoist = flagRoot.AddComponent<HoistableFlag>();
+        hoist.triggerOnVictory = true;
+        hoist.useBackOvershoot = false;
+        hoist.movingTarget = cloth.transform;
+        hoist.loweredLocalY = loweredClothY;
+        hoist.raisedLocalY = raisedClothY;
+        hoist.wavingFlag = wave;
+        hoist.loweredWaveScale = 0.42f;
+        hoist.hoistDuration = 1.05f;
     }
 
     static void CreateNewrozBrazierAt(string name, Transform parent, Vector3 pos, KurdistanEnvironmentAssets.SharedAssetSet shared)

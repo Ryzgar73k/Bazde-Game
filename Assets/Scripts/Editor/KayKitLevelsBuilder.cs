@@ -55,8 +55,8 @@ public static class KayKitLevelsBuilder
 
         KayKitLevelKit.PlacePlatform("neutral/floor_wood_2x6", "WoodBridge_1", new Vector3(0f, 1.8f, 44.8f), Vector3.one, s2, Quaternion.Euler(0f, 90f, 0f));
         KayKitLevelKit.PlacePlatform("blue/platform_6x6x1_blue", "Checkpoint1_Island", new Vector3(0f, 1.4f, 52.6f), Vector3.one, s2);
-        KayKitLevelKit.PlaceCheckpoint(1, new Vector3(0f, 2.4f, 52.6f), Quaternion.identity, ctx.BeaconMat, s2);
-        KayKitLevelKit.PlaceProp("yellow/signage_arrows_left_yellow", "UTurnSign_1", new Vector3(2.45f, 2.4f, 54.15f), Quaternion.Euler(0f, 115f, 0f), Vector3.one * 0.62f, s2, addCollider: true);
+        KayKitLevelKit.PlaceCheckpoint(1, new Vector3(0f, 2.4f, 52.6f), Quaternion.identity, ctx.BeaconMat, s2, new Vector3(2.28f, 0f, 2.28f));
+        KayKitLevelKit.PlaceProp("yellow/signage_arrows_left_yellow", "UTurnSign_1", new Vector3(2.35f, 2.4f, 51.85f), Quaternion.Euler(0f, 260f, 0f), Vector3.one * 0.56f, s2, addCollider: true);
 
         // BÖLÜM 3: Kavisli U-Dönüş & Zorunlu Trambolin Tırmanışı
         var s3 = new GameObject("Section3_UTurnAndTrampoline").transform;

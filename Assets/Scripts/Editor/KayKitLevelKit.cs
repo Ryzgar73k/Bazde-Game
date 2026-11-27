@@ -628,15 +628,14 @@ public static class KayKitLevelKit
         Vector3 flagPos = flagWorldOffset.HasValue
             ? floorPos + flagWorldOffset.Value
             : cpRoot.transform.TransformPoint(new Vector3(1.8f, 0f, 0f));
-        var flagGo = PlaceProp("green/flag_A_green", "CheckpointFlag", flagPos, spawnFacing, Vector3.one, cpRoot.transform);
-        if (flagGo != null)
-        {
-            var flagCap = flagGo.AddComponent<CapsuleCollider>();
-            flagCap.isTrigger = false;
-            flagCap.center = new Vector3(0f, 1.03f, 0f);
-            flagCap.radius = 0.16f;
-            flagCap.height = 2.06f;
-        }
+        HoistableFlag hoistable = PlaceHoistableKayKitFlag(
+            "CheckpointFlag",
+            flagPos,
+            spawnFacing,
+            Vector3.one,
+            cpRoot.transform,
+            triggerOnVictory: false,
+            addPoleCollider: true);
 
         var lightGO = new GameObject("CheckpointLight", typeof(Light));
         lightGO.transform.SetParent(cpRoot.transform, false);
@@ -657,6 +656,7 @@ public static class KayKitLevelKit
         cp.faceForwardOnRespawn = true;
         cp.visualRenderer = pad.GetComponent<MeshRenderer>();
         cp.checkpointLight = pl;
+        cp.checkpointFlag = hoistable;
         cp.inactiveColor = new Color(0.85f, 0.78f, 0.25f, 1f);
         cp.activeColor = new Color(0.15f, 0.95f, 0.35f, 1f);
         cp.activeEmissionColor = new Color(0.2f, 1.2f, 0.45f, 1f);
@@ -689,8 +689,8 @@ public static class KayKitLevelKit
     {
         var finishArch = PlaceProp("neutral/signage_finish", "FinishArch", floorCenter + facing * new Vector3(0f, 0f, -2.5f), facing * Quaternion.Euler(0f, 180f, 0f), Vector3.one, parent);
         if (finishArch != null) AddArchSideColliders(finishArch, halfSpanX: 2.45f, pillarHeight: 4.20f, pillarWidth: 0.55f, pillarDepth: 0.55f);
-        PlaceProp("green/flag_A_green", "VictoryFlag_L", floorCenter + facing * new Vector3(-3.2f, 0f, 2.0f), facing * Quaternion.Euler(0f, 20f, 0f), Vector3.one * 1.25f, parent);
-        PlaceProp("yellow/flag_A_yellow", "VictoryFlag_R", floorCenter + facing * new Vector3(3.2f, 0f, 2.0f), facing * Quaternion.Euler(0f, -20f, 0f), Vector3.one * 1.25f, parent);
+        PlaceHoistableKayKitFlag("VictoryFlag_L", floorCenter + facing * new Vector3(-3.2f, 0f, 2.0f), facing * Quaternion.Euler(0f, 20f, 0f), Vector3.one * 1.25f, parent, triggerOnVictory: true, addPoleCollider: false);
+        PlaceHoistableKayKitFlag("VictoryFlag_R", floorCenter + facing * new Vector3(3.2f, 0f, 2.0f), facing * Quaternion.Euler(0f, -20f, 0f), Vector3.one * 1.25f, parent, triggerOnVictory: true, addPoleCollider: false);
 
         var goalGO = new GameObject("LevelGoal", typeof(BoxCollider), typeof(LevelGoal));
         goalGO.transform.SetParent(parent, false);
@@ -702,11 +702,73 @@ public static class KayKitLevelKit
         var goal = goalGO.GetComponent<LevelGoal>();
         goal.playerTag = "Player";
         goal.stopPlayerOnFinish = true;
-        goal.uiDelay = 0.45f;
+        goal.uiDelay = 1.25f;
         goal.nextSceneName = nextSceneName;
         goal.mainMenuSceneName = "Level1";
 
         new GameObject("VictoryUI", typeof(VictoryUI)).transform.SetParent(parent, false);
+    }
+
+    static HoistableFlag PlaceHoistableKayKitFlag(
+        string name,
+        Vector3 pos,
+        Quaternion rot,
+        Vector3 scale,
+        Transform parent,
+        bool triggerOnVictory,
+        bool addPoleCollider)
+    {
+        KurdistanEnvironmentAssets.EnsureSplitKayKitFlagMeshes(
+            out Mesh poleYellow,
+            out Mesh poleGreen,
+            out Mesh clothYellow,
+            out Mesh clothGreen,
+            out Material flagMat);
+
+        var root = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer));
+        root.transform.SetParent(parent, false);
+        root.transform.SetPositionAndRotation(pos, rot);
+        root.transform.localScale = scale;
+
+        var poleMF = root.GetComponent<MeshFilter>();
+        poleMF.sharedMesh = poleYellow;
+        var poleMR = root.GetComponent<MeshRenderer>();
+        poleMR.sharedMaterial = flagMat;
+
+        if (addPoleCollider)
+        {
+            var flagCap = root.AddComponent<CapsuleCollider>();
+            flagCap.isTrigger = false;
+            flagCap.center = new Vector3(0f, 1.03f, 0f);
+            flagCap.radius = 0.16f;
+            flagCap.height = 2.06f;
+        }
+
+        var clothGO = new GameObject("FlagCloth", typeof(MeshFilter), typeof(MeshRenderer));
+        clothGO.transform.SetParent(root.transform, false);
+        clothGO.transform.localPosition = new Vector3(0f, -0.76f, 0f);
+        clothGO.transform.localRotation = Quaternion.identity;
+        clothGO.transform.localScale = Vector3.one;
+
+        var clothMF = clothGO.GetComponent<MeshFilter>();
+        clothMF.sharedMesh = clothYellow;
+        var clothMR = clothGO.GetComponent<MeshRenderer>();
+        clothMR.sharedMaterial = flagMat;
+
+        var hoist = root.AddComponent<HoistableFlag>();
+        hoist.triggerOnVictory = triggerOnVictory;
+        hoist.hoistDuration = 0.55f;
+        hoist.useBackOvershoot = true;
+        hoist.movingTarget = clothGO.transform;
+        hoist.loweredLocalY = -0.76f;
+        hoist.raisedLocalY = 0f;
+        hoist.poleMeshFilter = poleMF;
+        hoist.inactivePoleMesh = poleYellow;
+        hoist.activePoleMesh = poleGreen;
+        hoist.clothMeshFilter = clothMF;
+        hoist.inactiveClothMesh = clothYellow;
+        hoist.activeClothMesh = clothGreen;
+        return hoist;
     }
 
     static void AddFitBoxCollider(GameObject go, bool isTrigger)

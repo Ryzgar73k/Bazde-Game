@@ -73,6 +73,13 @@ public class LevelGoal : MonoBehaviour
             player.ResetVelocity();
         }
 
+        var victoryFlags = Object.FindObjectsByType<HoistableFlag>();
+        for (int i = 0; i < victoryFlags.Length; i++)
+        {
+            if (victoryFlags[i] != null && victoryFlags[i].triggerOnVictory)
+                victoryFlags[i].Raise();
+        }
+
         if (victorySound != null)
             AudioSource.PlayClipAtPoint(victorySound, transform.position, victorySoundVolume);
 

@@ -219,14 +219,7 @@ public class DeathFeedbackController : MonoBehaviour
 
         if (cause == DeathCause.Fall)
         {
-            BiomeFeedbackKind biome = ResolveBiomeKind();
-            AudioClip clip = (biome == BiomeFeedbackKind.Lake || biome == BiomeFeedbackKind.River)
-                ? waterSplashClip
-                : mistPoofClip;
-            AudioClip fallback = (biome == BiomeFeedbackKind.Lake || biome == BiomeFeedbackKind.River)
-                ? ProceduralGameAudio.WaterSplashClip
-                : ProceduralGameAudio.MistCloudPoofClip;
-            ProceduralGameAudio.Play(clip, fallback, 0.95f, 0.06f);
+            ProceduralGameAudio.Play(waterSplashClip, ProceduralGameAudio.WaterSplashClip, 0.95f, 0.06f);
         }
         else
         {
@@ -401,28 +394,28 @@ public class DeathFeedbackController : MonoBehaviour
             switch (biome)
             {
                 case BiomeFeedbackKind.Lake:
-                    SpawnBurst("LakeSplashBurst", splashPos,
+                    SpawnBurst("SeaSplashBurst_L1", splashPos,
                         new Color(0.24f, 0.85f, 0.92f, 0.95f), new Color(0.92f, 0.98f, 1f, 0.9f),
                         count: 26, minSpeed: 3.5f, maxSpeed: 8.2f, minSize: 0.25f, maxSize: 0.65f,
                         gravity: 1.4f, lifetime: 0.65f, coneAngle: 48f, upBias: 1f);
                     break;
                 case BiomeFeedbackKind.River:
-                    SpawnBurst("RiverSplashBurst", splashPos,
-                        new Color(0.14f, 0.68f, 0.82f, 0.95f), new Color(0.92f, 0.98f, 1f, 0.9f),
+                    SpawnBurst("SeaSplashBurst_L2", splashPos,
+                        new Color(0.14f, 0.68f, 0.86f, 0.95f), new Color(0.92f, 0.98f, 1f, 0.9f),
                         count: 26, minSpeed: 3.5f, maxSpeed: 8.2f, minSize: 0.25f, maxSize: 0.65f,
                         gravity: 1.4f, lifetime: 0.65f, coneAngle: 48f, upBias: 1f);
                     break;
                 case BiomeFeedbackKind.SunsetMist:
-                    SpawnBurst("MistPoofBurst", splashPos,
-                        new Color(1.0f, 0.72f, 0.36f, 0.88f), new Color(0.96f, 0.44f, 0.22f, 0.85f),
-                        count: 24, minSpeed: 2.0f, maxSpeed: 5.5f, minSize: 0.55f, maxSize: 1.25f,
-                        gravity: -0.15f, lifetime: 0.75f, coneAngle: 68f, upBias: 0.8f);
+                    SpawnBurst("SeaSplashBurst_L3", splashPos,
+                        new Color(0.24f, 0.52f, 0.72f, 0.95f), new Color(1.0f, 0.85f, 0.66f, 0.9f),
+                        count: 26, minSpeed: 3.5f, maxSpeed: 8.2f, minSize: 0.25f, maxSize: 0.65f,
+                        gravity: 1.4f, lifetime: 0.65f, coneAngle: 48f, upBias: 1f);
                     break;
                 default:
-                    SpawnBurst("CloudPoofBurst", splashPos,
-                        new Color(0.98f, 0.99f, 1f, 0.92f), new Color(0.75f, 0.88f, 1f, 0.85f),
-                        count: 26, minSpeed: 2.2f, maxSpeed: 5.8f, minSize: 0.60f, maxSize: 1.35f,
-                        gravity: -0.10f, lifetime: 0.78f, coneAngle: 72f, upBias: 0.8f);
+                    SpawnBurst("SeaSplashBurst_L4", splashPos,
+                        new Color(0.26f, 0.66f, 0.90f, 0.95f), new Color(0.96f, 0.99f, 1f, 0.9f),
+                        count: 26, minSpeed: 3.5f, maxSpeed: 8.2f, minSize: 0.25f, maxSize: 0.65f,
+                        gravity: 1.4f, lifetime: 0.65f, coneAngle: 48f, upBias: 1f);
                     break;
             }
         }
@@ -480,10 +473,11 @@ public class DeathFeedbackController : MonoBehaviour
         go.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
 
         var ps = go.GetComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = ps.main;
+        main.playOnAwake = false;
         main.duration = 0.25f;
         main.loop = false;
-        main.playOnAwake = false;
         main.useUnscaledTime = true;
         main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * 0.7f, lifetime);
         main.startSpeed = new ParticleSystem.MinMaxCurve(minSpeed, maxSpeed);
@@ -583,13 +577,12 @@ public class DeathFeedbackController : MonoBehaviour
     {
         switch (biome)
         {
-            case BiomeFeedbackKind.Lake:
-            case BiomeFeedbackKind.River:
-                return new Color(0.08f, 0.45f, 0.62f, 1f);
             case BiomeFeedbackKind.SunsetMist:
-                return new Color(0.75f, 0.34f, 0.14f, 1f);
+                return new Color(0.16f, 0.28f, 0.48f, 1f);
+            case BiomeFeedbackKind.CloudSea:
+                return new Color(0.10f, 0.38f, 0.62f, 1f);
             default:
-                return new Color(0.18f, 0.28f, 0.46f, 1f);
+                return new Color(0.08f, 0.45f, 0.62f, 1f);
         }
     }
 

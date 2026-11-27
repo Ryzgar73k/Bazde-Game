@@ -41,6 +41,9 @@ public class Checkpoint : MonoBehaviour
     [Tooltip("Opsiyonel nokta ışığı (aktifleşince yeşile döner veya açılır)")]
     public Light checkpointLight;
 
+    [Tooltip("Aktifleştiğinde yukarı çekilip yeşile dönecek bayrak bileşeni")]
+    public HoistableFlag checkpointFlag;
+
     [Tooltip("Aktifleştiğinde açılacak parçacık efekti veya dekoratif nesne")]
     public GameObject activeVFX;
 
@@ -64,6 +67,9 @@ public class Checkpoint : MonoBehaviour
 
         if (checkpointLight == null)
             checkpointLight = GetComponentInChildren<Light>();
+
+        if (checkpointFlag == null)
+            checkpointFlag = GetComponentInChildren<HoistableFlag>(true);
 
         var col = GetComponent<Collider>();
         if (col == null)
@@ -104,6 +110,9 @@ public class Checkpoint : MonoBehaviour
         IsActivated = true;
 
         UpdateVisuals(true);
+
+        if (checkpointFlag != null)
+            checkpointFlag.Raise();
 
         if (activeVFX != null)
             activeVFX.SetActive(true);
