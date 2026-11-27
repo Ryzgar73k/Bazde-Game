@@ -56,6 +56,7 @@ public static class KurdistanEnvironmentAssets
         public Mesh NewrozBrazierMesh;
         public Mesh StoneTorchPedestalMesh;
         public Mesh FlameCoreMesh;
+        public Mesh WavySeaMesh;
     }
 
     public static void EnsureFolders()
@@ -109,7 +110,8 @@ public static class KurdistanEnvironmentAssets
             HighlandVillageMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/HighlandVillageCluster.asset", BuildHighlandVillageMesh()),
             NewrozBrazierMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/NewrozBrazier.asset", BuildNewrozBrazierMesh()),
             StoneTorchPedestalMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/StoneTorchPedestal.asset", BuildStoneTorchPedestalMesh()),
-            FlameCoreMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/FlameCore.asset", BuildFlameCoreMesh())
+            FlameCoreMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/FlameCore.asset", BuildFlameCoreMesh()),
+            WavySeaMesh = CreateOrUpdateMeshAsset($"{MeshesDir}/WavySeaPlane.asset", BuildWavySeaMesh())
         };
 
         AssetDatabase.SaveAssets();
@@ -131,10 +133,15 @@ public static class KurdistanEnvironmentAssets
         Color foothill;
         Color cliff;
         Color snow;
-        Color surfaceColor;
-        float surfaceSmoothness;
-        bool surfaceTransparent;
-        Vector2 surfaceTiling;
+        Color seaDeepColor;
+        Color seaShallowColor;
+        Color seaFoamColor;
+        Color seaFresnelColor;
+        Color seaSpecTint;
+        float seaWaveAmplitude;
+        float seaWaveSpeed;
+        float seaWaveScale;
+        float seaFoamThreshold;
         Color pineColor;
         Color skyTint;
         float skyExposure;
@@ -148,14 +155,19 @@ public static class KurdistanEnvironmentAssets
         switch (levelNumber)
         {
             case 2:
-                // Level 2: Kanyon & Nehir Vadisi (Öğle)
+                // Level 2: Kanyon Vadisi (Öğle - Derin Kanyon Denizi)
                 foothill = new Color(0.34f, 0.52f, 0.28f);
                 cliff = new Color(0.56f, 0.42f, 0.34f);
                 snow = new Color(0.88f, 0.90f, 0.94f);
-                surfaceColor = new Color(0.11f, 0.54f, 0.68f, 1f);
-                surfaceSmoothness = 0.78f;
-                surfaceTransparent = false;
-                surfaceTiling = new Vector2(22f, 22f);
+                seaDeepColor = new Color(0.010f, 0.09f, 0.26f, 1f);
+                seaShallowColor = new Color(0.03f, 0.32f, 0.56f, 1f);
+                seaFoamColor = new Color(0.90f, 0.96f, 1.0f, 1f);
+                seaFresnelColor = new Color(0.18f, 0.50f, 0.78f, 1f);
+                seaSpecTint = new Color(1.0f, 0.98f, 0.94f, 1f);
+                seaWaveAmplitude = 1.25f;
+                seaWaveSpeed = 1.55f;
+                seaWaveScale = 0.25f;
+                seaFoamThreshold = 0.79f;
                 pineColor = new Color(0.18f, 0.43f, 0.22f);
                 skyTint = new Color(0.52f, 0.54f, 0.56f, 1f);
                 skyExposure = 1.05f;
@@ -168,14 +180,19 @@ public static class KurdistanEnvironmentAssets
                 break;
 
             case 3:
-                // Level 3: Yüksek Dağ Geçidi (Altın Saat / Gün Batımı)
+                // Level 3: Yüksek Dağ Geçidi (Gün Batımı - Lacivert & Altın Yansımalı Deniz)
                 foothill = new Color(0.32f, 0.44f, 0.24f);
                 cliff = new Color(0.45f, 0.36f, 0.34f);
                 snow = new Color(0.98f, 0.89f, 0.82f);
-                surfaceColor = new Color(0.95f, 0.68f, 0.42f, 0.68f);
-                surfaceSmoothness = 0.15f;
-                surfaceTransparent = true;
-                surfaceTiling = new Vector2(10f, 10f);
+                seaDeepColor = new Color(0.020f, 0.06f, 0.18f, 1f);
+                seaShallowColor = new Color(0.07f, 0.20f, 0.38f, 1f);
+                seaFoamColor = new Color(1.0f, 0.80f, 0.56f, 1f);
+                seaFresnelColor = new Color(0.85f, 0.46f, 0.22f, 1f);
+                seaSpecTint = new Color(1.0f, 0.68f, 0.32f, 1f);
+                seaWaveAmplitude = 1.35f;
+                seaWaveSpeed = 1.50f;
+                seaWaveScale = 0.24f;
+                seaFoamThreshold = 0.78f;
                 pineColor = new Color(0.16f, 0.34f, 0.19f);
                 skyTint = new Color(0.66f, 0.47f, 0.36f, 1f);
                 skyExposure = 0.95f;
@@ -188,14 +205,19 @@ public static class KurdistanEnvironmentAssets
                 break;
 
             case 4:
-                // Level 4: Karlı Zirveler (Bulutların Üstü)
+                // Level 4: Karlı Zirveler (Derin Kuzey Okyanusu)
                 foothill = new Color(0.38f, 0.47f, 0.35f);
                 cliff = new Color(0.42f, 0.44f, 0.49f);
                 snow = new Color(0.95f, 0.97f, 1.0f);
-                surfaceColor = new Color(0.93f, 0.96f, 1.0f, 1f);
-                surfaceSmoothness = 0.10f;
-                surfaceTransparent = false;
-                surfaceTiling = new Vector2(12f, 12f);
+                seaDeepColor = new Color(0.015f, 0.08f, 0.22f, 1f);
+                seaShallowColor = new Color(0.05f, 0.28f, 0.50f, 1f);
+                seaFoamColor = new Color(0.94f, 0.98f, 1.0f, 1f);
+                seaFresnelColor = new Color(0.28f, 0.54f, 0.78f, 1f);
+                seaSpecTint = new Color(0.94f, 0.97f, 1.0f, 1f);
+                seaWaveAmplitude = 1.45f;
+                seaWaveSpeed = 1.65f;
+                seaWaveScale = 0.26f;
+                seaFoamThreshold = 0.76f;
                 pineColor = new Color(0.24f, 0.42f, 0.33f);
                 skyTint = new Color(0.48f, 0.54f, 0.62f, 1f);
                 skyExposure = 1.10f;
@@ -208,14 +230,19 @@ public static class KurdistanEnvironmentAssets
                 break;
 
             default:
-                // Level 1: Bahar Yaylası (Sabah)
+                // Level 1: Bahar Yaylası (Sabah - Canlı Akdeniz/Turkuaz Deniz)
                 foothill = new Color(0.29f, 0.60f, 0.25f);
                 cliff = new Color(0.49f, 0.45f, 0.40f);
                 snow = new Color(0.93f, 0.96f, 0.99f);
-                surfaceColor = new Color(0.12f, 0.59f, 0.64f, 1f);
-                surfaceSmoothness = 0.74f;
-                surfaceTransparent = false;
-                surfaceTiling = new Vector2(18f, 18f);
+                seaDeepColor = new Color(0.015f, 0.12f, 0.30f, 1f);
+                seaShallowColor = new Color(0.04f, 0.42f, 0.62f, 1f);
+                seaFoamColor = new Color(0.92f, 0.97f, 1.0f, 1f);
+                seaFresnelColor = new Color(0.20f, 0.58f, 0.82f, 1f);
+                seaSpecTint = new Color(1.0f, 0.97f, 0.88f, 1f);
+                seaWaveAmplitude = 1.15f;
+                seaWaveSpeed = 1.45f;
+                seaWaveScale = 0.24f;
+                seaFoamThreshold = 0.80f;
                 pineColor = new Color(0.18f, 0.49f, 0.22f);
                 skyTint = new Color(0.50f, 0.54f, 0.58f, 1f);
                 skyExposure = 1.05f;
@@ -229,13 +256,18 @@ public static class KurdistanEnvironmentAssets
         }
 
         string prefix = $"{MaterialsDir}/Biome_L{levelNumber}";
-        Material surfaceMat = CreateOrUpdateSurfaceMaterial(
+        Material surfaceMat = CreateOrUpdateWavySeaMaterial(
             $"{prefix}_Surface.mat",
-            surfaceColor,
-            surfaceSmoothness,
-            surfaceTransparent,
             waterTex,
-            surfaceTiling);
+            seaDeepColor,
+            seaShallowColor,
+            seaFoamColor,
+            seaFresnelColor,
+            seaSpecTint,
+            seaWaveAmplitude,
+            seaWaveSpeed,
+            seaWaveScale,
+            seaFoamThreshold);
 
         float safeInner = Mathf.Max(42f, innerValleyRadius);
         Mesh valleyMesh = BuildMountainRingMesh(
@@ -640,6 +672,48 @@ public static class KurdistanEnvironmentAssets
         mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
         mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
         mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
+    static Material CreateOrUpdateWavySeaMaterial(
+        string path,
+        Texture2D patternTex,
+        Color deepColor,
+        Color shallowColor,
+        Color foamColor,
+        Color fresnelColor,
+        Color specTint,
+        float waveAmplitude,
+        float waveSpeed,
+        float waveScale,
+        float foamThreshold)
+    {
+        Shader shader = Shader.Find("Bazde/StylizedWavySea");
+        if (shader == null)
+        {
+            Debug.LogWarning("[KurdistanEnvironmentAssets] Bazde/StylizedWavySea shader bulunamadı, URP Lit yedek kullanılıyor.");
+            return CreateOrUpdateSurfaceMaterial(path, shallowColor, 0.78f, false, patternTex, new Vector2(22f, 22f));
+        }
+
+        var mat = CreateOrUpdateMaterialAsset(path, shader);
+        if (mat.HasProperty("_WaveTex")) mat.SetTexture("_WaveTex", patternTex);
+        if (mat.HasProperty("_DeepColor")) mat.SetColor("_DeepColor", deepColor);
+        if (mat.HasProperty("_ShallowColor")) mat.SetColor("_ShallowColor", shallowColor);
+        if (mat.HasProperty("_FoamColor")) mat.SetColor("_FoamColor", foamColor);
+        if (mat.HasProperty("_FresnelColor")) mat.SetColor("_FresnelColor", fresnelColor);
+        if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 3.5f);
+        if (mat.HasProperty("_SpecColorSea")) mat.SetColor("_SpecColorSea", specTint);
+        if (mat.HasProperty("_SpecPower")) mat.SetFloat("_SpecPower", 72f);
+        if (mat.HasProperty("_SpecIntensity")) mat.SetFloat("_SpecIntensity", 0.90f);
+        if (mat.HasProperty("_WaveAmplitude")) mat.SetFloat("_WaveAmplitude", waveAmplitude);
+        if (mat.HasProperty("_WaveSpeed")) mat.SetFloat("_WaveSpeed", waveSpeed);
+        if (mat.HasProperty("_WaveScale")) mat.SetFloat("_WaveScale", waveScale);
+        if (mat.HasProperty("_NormalStrength")) mat.SetFloat("_NormalStrength", 2.2f);
+        if (mat.HasProperty("_PatternScale")) mat.SetFloat("_PatternScale", 0.045f);
+        if (mat.HasProperty("_FoamThreshold")) mat.SetFloat("_FoamThreshold", foamThreshold);
+        mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Geometry;
+
         EditorUtility.SetDirty(mat);
         return mat;
     }
@@ -1054,6 +1128,154 @@ public static class KurdistanEnvironmentAssets
             mesh.RecalculateBounds();
             return mesh;
         }
+    }
+
+    public static void EnsureSplitKayKitFlagMeshes(
+        out Mesh poleYellow,
+        out Mesh poleGreen,
+        out Mesh clothYellow,
+        out Mesh clothGreen,
+        out Material flagMaterial)
+    {
+        EnsureFolders();
+
+        var yellowPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/KayKit/Packs/KayKit - Platformer Pack (for Unity)/Prefabs/yellow/flag_A_yellow.prefab");
+        var greenPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/KayKit/Packs/KayKit - Platformer Pack (for Unity)/Prefabs/green/flag_A_green.prefab");
+
+        Mesh yellowSrc = yellowPrefab != null ? yellowPrefab.GetComponentInChildren<MeshFilter>(true)?.sharedMesh : null;
+        Mesh greenSrc = greenPrefab != null ? greenPrefab.GetComponentInChildren<MeshFilter>(true)?.sharedMesh : null;
+        flagMaterial = yellowPrefab != null ? yellowPrefab.GetComponentInChildren<MeshRenderer>(true)?.sharedMaterial : null;
+
+        if (yellowSrc == null || greenSrc == null || yellowSrc.vertexCount != greenSrc.vertexCount)
+        {
+            poleYellow = yellowSrc;
+            poleGreen = greenSrc;
+            clothYellow = null;
+            clothGreen = null;
+            return;
+        }
+
+        Vector3[] verts = yellowSrc.vertices;
+        Vector2[] yellowUV = yellowSrc.uv;
+        Vector2[] greenUV = greenSrc.uv;
+        bool[] isClothVert = new bool[verts.Length];
+        for (int i = 0; i < verts.Length; i++)
+        {
+            isClothVert[i] = (greenUV[i] - yellowUV[i]).sqrMagnitude > 1e-6f && verts[i].y > 0.35f;
+        }
+
+        poleYellow = CreateOrUpdateMeshAsset($"{MeshesDir}/KayKitFlag_Pole_Yellow.asset",
+            ExtractFlagPartMesh("KayKitFlag_Pole_Yellow", yellowSrc, isClothVert, wantCloth: false));
+        poleGreen = CreateOrUpdateMeshAsset($"{MeshesDir}/KayKitFlag_Pole_Green.asset",
+            ExtractFlagPartMesh("KayKitFlag_Pole_Green", greenSrc, isClothVert, wantCloth: false));
+        clothYellow = CreateOrUpdateMeshAsset($"{MeshesDir}/KayKitFlag_Cloth_Yellow.asset",
+            ExtractFlagPartMesh("KayKitFlag_Cloth_Yellow", yellowSrc, isClothVert, wantCloth: true));
+        clothGreen = CreateOrUpdateMeshAsset($"{MeshesDir}/KayKitFlag_Cloth_Green.asset",
+            ExtractFlagPartMesh("KayKitFlag_Cloth_Green", greenSrc, isClothVert, wantCloth: true));
+    }
+
+    static Mesh ExtractFlagPartMesh(string meshName, Mesh source, bool[] isClothVert, bool wantCloth)
+    {
+        Vector3[] srcVerts = source.vertices;
+        Vector3[] srcNormals = source.normals;
+        Vector2[] srcUV = source.uv;
+        int[] srcTris = source.triangles;
+
+        var remap = new Dictionary<int, int>(srcVerts.Length);
+        var verts = new List<Vector3>(srcVerts.Length);
+        var normals = new List<Vector3>(srcVerts.Length);
+        var uvs = new List<Vector2>(srcVerts.Length);
+        var tris = new List<int>(srcTris.Length);
+
+        for (int t = 0; t < srcTris.Length; t += 3)
+        {
+            int i0 = srcTris[t];
+            int i1 = srcTris[t + 1];
+            int i2 = srcTris[t + 2];
+
+            int clothCount = (isClothVert[i0] ? 1 : 0) + (isClothVert[i1] ? 1 : 0) + (isClothVert[i2] ? 1 : 0);
+            bool belongs = wantCloth ? (clothCount == 3) : (clothCount == 0);
+            if (!belongs) continue;
+
+            int[] tri = { i0, i1, i2 };
+            for (int k = 0; k < 3; k++)
+            {
+                int srcIdx = tri[k];
+                if (!remap.TryGetValue(srcIdx, out int dstIdx))
+                {
+                    dstIdx = verts.Count;
+                    remap[srcIdx] = dstIdx;
+                    verts.Add(srcVerts[srcIdx]);
+                    normals.Add(srcNormals != null && srcIdx < srcNormals.Length ? srcNormals[srcIdx] : Vector3.up);
+                    uvs.Add(srcUV != null && srcIdx < srcUV.Length ? srcUV[srcIdx] : Vector2.zero);
+                }
+                tris.Add(dstIdx);
+            }
+        }
+
+        var mesh = new Mesh { name = meshName };
+        mesh.SetVertices(verts);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, uvs);
+        mesh.SetTriangles(tris, 0);
+        mesh.RecalculateBounds();
+        return mesh;
+    }
+
+    static Mesh BuildWavySeaMesh()
+    {
+        const int seg = 96;
+        const int cols = seg + 1;
+        const float halfExtent = 550f;
+
+        int vertCount = cols * cols;
+        var verts = new Vector3[vertCount];
+        var normals = new Vector3[vertCount];
+        var uvs = new Vector2[vertCount];
+
+        for (int z = 0; z < cols; z++)
+        {
+            float vz = (float)z / seg;
+            float sz = vz * 2f - 1f;
+            float pz = Mathf.Sign(sz) * Mathf.Pow(Mathf.Abs(sz), 1.45f) * halfExtent;
+
+            for (int x = 0; x < cols; x++)
+            {
+                float ux = (float)x / seg;
+                float sx = ux * 2f - 1f;
+                float px = Mathf.Sign(sx) * Mathf.Pow(Mathf.Abs(sx), 1.45f) * halfExtent;
+
+                int idx = z * cols + x;
+                verts[idx] = new Vector3(px, 0f, pz);
+                normals[idx] = Vector3.up;
+                uvs[idx] = new Vector2(ux, vz);
+            }
+        }
+
+        var tris = new int[seg * seg * 6];
+        int t = 0;
+        for (int z = 0; z < seg; z++)
+        {
+            for (int x = 0; x < seg; x++)
+            {
+                int i00 = z * cols + x;
+                int i10 = i00 + 1;
+                int i01 = i00 + cols;
+                int i11 = i01 + 1;
+
+                tris[t++] = i00; tris[t++] = i01; tris[t++] = i11;
+                tris[t++] = i00; tris[t++] = i11; tris[t++] = i10;
+            }
+        }
+
+        var mesh = new Mesh { name = "WavySeaPlane" };
+        mesh.SetVertices(verts);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, uvs);
+        mesh.SetTriangles(tris, 0);
+        // GPU vertex dalgası kırpılmasın diye dikey bounds payı ekle
+        mesh.bounds = new Bounds(Vector3.zero, new Vector3(halfExtent * 2f, 8f, halfExtent * 2f));
+        return mesh;
     }
 
     static Mesh BuildRockPillarRootMesh()
